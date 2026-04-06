@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tesla</title>
+<link href="https://fonts.googleapis.com/css2?family=Gotham:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --tesla-red:#E82127;
+  --tesla-dark:#171A20;
+  --tesla-gray:#393C41;
+  --tesla-light:#F4F4F4;
+  --tesla-white:#FFFFFF;
+  --tesla-muted:#5C5E62;
+}
+body{font-family:'Inter',sans-serif;background:#fff;color:var(--tesla-dark);overflow-x:hidden}
+
+/* ===== NAVBAR ===== */
+#navbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 40px;
+  transition:background 0.3s;
+}
+#navbar.solid{background:rgba(255,255,255,0.97);backdrop-filter:blur(10px);box-shadow:0 1px 0 rgba(0,0,0,0.1)}
+.nav-logo{font-size:26px;font-weight:700;letter-spacing:-1px;color:var(--tesla-dark);cursor:pointer}
+.nav-logo span{color:var(--tesla-red)}
+.nav-links{display:flex;gap:24px}
+.nav-links a{font-size:14px;font-weight:500;color:var(--tesla-dark);text-decoration:none;cursor:pointer;transition:opacity 0.2s}
+.nav-links a:hover{opacity:0.6}
+.nav-actions{display:flex;gap:12px;align-items:center}
+.nav-btn{font-size:13px;font-weight:500;padding:8px 16px;border-radius:20px;border:none;cursor:pointer;transition:all 0.2s}
+.nav-btn-ghost{background:rgba(0,0,0,0.05);color:var(--tesla-dark)}
+.nav-btn-ghost:hover{background:rgba(0,0,0,0.1)}
+.nav-btn-user{background:var(--tesla-dark);color:#fff}
+.nav-btn-user:hover{background:#000}
+
+/* ===== PAGES ===== */
+.page{display:none;min-height:100vh}
+.page.active{display:block}
+
+/* ===== AUTH PAGE ===== */
+#authPage{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#16213e 100%);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.auth-container{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(20px);
+  border-radius:16px;
+  padding:48px 40px;
+  width:100%;max-width:420px;
+  text-align:center;
+}
+.auth-logo{font-size:32px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:-1px}
+.auth-logo span{color:var(--tesla-red)}
+.auth-subtitle{color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:32px}
+.auth-tabs{display:flex;background:rgba(255,255,255,0.05);border-radius:8px;padding:4px;margin-bottom:28px}
+.auth-tab{flex:1;padding:10px;border:none;background:transparent;color:rgba(255,255,255,0.5);font-size:14px;font-weight:500;cursor:pointer;border-radius:6px;transition:all 0.2s}
+.auth-tab.active{background:#fff;color:#000}
+.auth-field{margin-bottom:16px;text-align:left}
+.auth-field label{display:block;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase}
+.auth-field input{
+  width:100%;padding:14px 16px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;
+  outline:none;transition:border 0.2s;
+}
+.auth-field input:focus{border-color:rgba(255,255,255,0.4)}
+.auth-field input::placeholder{color:rgba(255,255,255,0.2)}
+.auth-btn{
+  width:100%;padding:15px;
+  background:var(--tesla-red);
+  color:#fff;border:none;border-radius:8px;
+  font-size:15px;font-weight:600;cursor:pointer;
+  margin-top:8px;transition:all 0.2s;font-family:'Inter',sans-serif;
+}
+.auth-btn:hover{background:#c41e23;transform:translateY(-1px)}
+.auth-error{color:#ff6b6b;font-size:13px;margin-top:8px;min-height:20px}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:rgba(255,255,255,0.2);font-size:13px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.1)}
+
+/* ===== HOMEPAGE ===== */
+#homePage{scroll-snap-type:y mandatory;height:100vh;overflow-y:scroll;overflow-x:hidden}
+.vehicle-section{
+  scroll-snap-align:start;
+  height:100vh;
+  position:relative;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;
+  padding:120px 0 60px;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+}
+.vehicle-section::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(0,0,0,0.1),transparent 40%,transparent 60%,rgba(0,0,0,0.2));
+}
+.vehicle-info{text-align:center;z-index:2}
+.vehicle-name{font-size:42px;font-weight:700;color:#fff;letter-spacing:-1px;text-shadow:0 2px 20px rgba(0,0,0,0.3)}
+.vehicle-tagline{font-size:16px;color:rgba(255,255,255,0.85);margin-top:8px;font-weight:400}
+.vehicle-sub{font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px}
+.vehicle-actions{display:flex;gap:16px;z-index:2;flex-wrap:wrap;justify-content:center}
+.vbtn{
+  padding:14px 32px;border-radius:6px;
+  font-size:14px;font-weight:600;cursor:pointer;
+  border:none;transition:all 0.2s;font-family:'Inter',sans-serif;
+  min-width:180px;
+}
+.vbtn-dark{background:rgba(23,26,32,0.85);color:#fff;backdrop-filter:blur(10px)}
+.vbtn-dark:hover{background:rgba(23,26,32,1)}
+.vbtn-light{background:rgba(255,255,255,0.85);color:#171A20;backdrop-filter:blur(10px)}
+.vbtn-light:hover{background:#fff}
+
+/* Vehicle backgrounds */
+.v-model3{background-image:url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Model-3-Desktop-NA.jpg')}
+.v-modely{background-image:url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Model-Y-Desktop-Global.jpg')}
+.v-modelx{background-image:url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Model-X-Desktop-NA.jpg')}
+.v-models{background-image:url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Model-S-Desktop-NA.jpg')}
+.v-cyber{background-image:url('https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Homepage-Cybertruck-Desktop-NA.jpg')}
+
+/* ===== MODAL OVERLAY ===== */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal-box{
+  background:#fff;border-radius:16px;
+  width:100%;max-width:560px;
+  max-height:90vh;overflow-y:auto;
+  padding:40px;position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  background:none;border:none;font-size:22px;cursor:pointer;
+  color:#666;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;transition:background 0.2s;
+}
+.modal-close:hover{background:#f4f4f4}
+.modal-title{font-size:22px;font-weight:700;margin-bottom:6px;color:var(--tesla-dark)}
+.modal-subtitle{font-size:14px;color:var(--tesla-muted);margin-bottom:28px}
+
+/* ===== FORM FIELDS ===== */
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:var(--tesla-gray);margin-bottom:6px}
+.form-group input,.form-group select{
+  width:100%;padding:13px 16px;
+  border:1.5px solid #e0e0e0;border-radius:8px;
+  font-size:15px;font-family:'Inter',sans-serif;color:var(--tesla-dark);
+  outline:none;transition:border 0.2s;background:#fff;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--tesla-dark)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.submit-btn{
+  width:100%;padding:15px;
+  background:var(--tesla-dark);color:#fff;
+  border:none;border-radius:8px;font-size:15px;font-weight:600;
+  cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif;margin-top:8px;
+}
+.submit-btn:hover{background:#000;transform:translateY(-1px)}
+.submit-btn:disabled{background:#999;cursor:not-allowed;transform:none}
+.step-indicator{display:flex;gap:8px;margin-bottom:28px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:#e0e0e0;transition:all 0.3s}
+.step-dot.active{background:var(--tesla-dark);width:24px;border-radius:4px}
+.step-dot.done{background:var(--tesla-red)}
+
+/* ===== FLIP CARD ===== */
+.card-preview-wrap{perspective:1000px;margin-bottom:28px}
+.card-preview{
+  width:100%;max-width:360px;height:200px;
+  margin:0 auto;
+  position:relative;transform-style:preserve-3d;
+  transition:transform 0.6s ease;
+}
+.card-preview.flipped{transform:rotateY(180deg)}
+.card-face{
+  position:absolute;inset:0;border-radius:16px;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  padding:24px 28px;display:flex;flex-direction:column;justify-content:space-between;
+  box-shadow:0 20px 40px rgba(0,0,0,0.25);
+  overflow:hidden;
+}
+.card-front{
+  background:linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#E82127 100%);
+}
+.card-back{
+  background:linear-gradient(135deg,#0f3460 0%,#16213e 50%,#1a1a2e 100%);
+  transform:rotateY(180deg);
+}
+.card-chip{
+  width:40px;height:30px;
+  background:linear-gradient(135deg,#d4af37,#f0d060,#b8960c);
+  border-radius:6px;position:relative;overflow:hidden;
+}
+.card-chip::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,0,0,0.3)}
+.card-chip::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.3)}
+.card-logo-row{display:flex;justify-content:space-between;align-items:center}
+.card-brand{font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase}
+.card-network{font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px}
+.card-number-display{font-size:18px;font-weight:400;color:#fff;letter-spacing:4px;font-family:'Courier New',monospace}
+.card-bottom-row{display:flex;justify-content:space-between;align-items:flex-end}
+.card-label-sm{font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.card-value-sm{font-size:14px;color:#fff;font-weight:500;letter-spacing:1px}
+.card-expiry-display{text-align:left}
+.card-name-display{text-transform:uppercase;font-size:13px;letter-spacing:2px}
+/* Back */
+.card-strip{height:44px;background:#1a1a1a;margin:-24px -28px 16px;margin-top:28px}
+.card-cvv-area{background:rgba(255,255,255,0.9);border-radius:4px;padding:10px 16px;display:flex;align-items:center;justify-content:flex-end}
+.card-cvv-label{font-size:11px;color:#666;margin-right:12px;font-weight:500}
+.card-cvv-value{font-size:15px;letter-spacing:4px;color:#333;font-family:'Courier New',monospace}
+.card-watermark{position:absolute;bottom:16px;left:28px;font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2px;font-weight:700;text-transform:uppercase}
+
+/* ===== TEST DRIVE ===== */
+.time-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.time-slot{
+  padding:10px 8px;border:1.5px solid #e0e0e0;border-radius:8px;
+  text-align:center;font-size:13px;font-weight:500;cursor:pointer;
+  transition:all 0.2s;background:#fff;color:var(--tesla-dark);
+}
+.time-slot:hover{border-color:var(--tesla-dark)}
+.time-slot.selected{background:var(--tesla-dark);color:#fff;border-color:var(--tesla-dark)}
+
+/* ===== SUCCESS SCREEN ===== */
+.success-screen{text-align:center;padding:20px 0}
+.success-icon{width:72px;height:72px;background:#00c851;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px}
+.success-title{font-size:22px;font-weight:700;margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--tesla-muted);line-height:1.6}
+.ref-code{
+  background:var(--tesla-light);border-radius:8px;padding:16px;
+  margin:20px 0;font-size:18px;font-weight:700;letter-spacing:3px;
+  color:var(--tesla-dark);
+}
+
+/* ===== DASHBOARD ===== */
+#dashPage{padding:100px 40px 60px;max-width:1000px;margin:0 auto}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
+.dash-title{font-size:28px;font-weight:700}
+.dash-tabs{display:flex;gap:0;border-bottom:2px solid #e0e0e0;margin-bottom:28px}
+.dash-tab{padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--tesla-muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s}
+.dash-tab.active{color:var(--tesla-dark);border-bottom-color:var(--tesla-dark)}
+.dash-tab-content{display:none}
+.dash-tab-content.active{display:block}
+.order-card,.booking-card{
+  border:1.5px solid #e8e8e8;border-radius:12px;padding:20px 24px;
+  margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;
+}
+.order-vehicle{font-size:16px;font-weight:600}
+.order-date{font-size:13px;color:var(--tesla-muted);margin-top:3px}
+.order-amount{font-size:18px;font-weight:700;color:var(--tesla-dark)}
+.status-badge{
+  padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
+}
+.status-pending{background:#fff3cd;color:#856404}
+.status-confirmed{background:#d4edda;color:#155724}
+.status-cancelled{background:#f8d7da;color:#721c24}
+.empty-state{text-align:center;padding:60px 20px;color:var(--tesla-muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+
+/* ===== ADMIN ===== */
+#adminPage{padding:80px 40px 60px;max-width:1200px;margin:0 auto}
+.admin-header{background:var(--tesla-dark);color:#fff;padding:20px 40px;position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between}
+.admin-title{font-size:18px;font-weight:700}
+.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;margin-top:16px}
+.stat-card{background:#fff;border:1.5px solid #e8e8e8;border-radius:12px;padding:20px;text-align:center}
+.stat-num{font-size:28px;font-weight:700;color:var(--tesla-dark)}
+.stat-label{font-size:12px;color:var(--tesla-muted);margin-top:4px;font-weight:500}
+.admin-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1.5px solid #e8e8e8}
+.admin-table th{background:var(--tesla-dark);color:#fff;padding:12px 16px;font-size:13px;font-weight:600;text-align:left}
+.admin-table td{padding:12px 16px;font-size:13px;border-bottom:1px solid #f0f0f0;color:var(--tesla-gray)}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-table tr:hover td{background:#fafafa}
+.admin-tabs{display:flex;gap:12px;margin-bottom:24px}
+.admin-tab-btn{padding:10px 20px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.admin-tab-btn.active{background:var(--tesla-dark);color:#fff;border-color:var(--tesla-dark)}
+
+/* ===== VEHICLE SELECT ===== */
+.vehicle-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.vehicle-option{
+  border:2px solid #e0e0e0;border-radius:10px;padding:16px;
+  cursor:pointer;transition:all 0.2s;text-align:center;
+}
+.vehicle-option:hover{border-color:var(--tesla-gray)}
+.vehicle-option.selected{border-color:var(--tesla-dark);background:#f9f9f9}
+.vehicle-option img{width:100%;height:70px;object-fit:contain;margin-bottom:8px}
+.vehicle-option-name{font-size:14px;font-weight:600;color:var(--tesla-dark)}
+.vehicle-option-price{font-size:12px;color:var(--tesla-muted);margin-top:2px}
+
+/* Loading */
+.loading{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== TESLA PAGE TRANSITION LOADER ===== */
+#teslaLoader{
+  display:none;
+  position:fixed;inset:0;z-index:9999;
+  background:#fff;
+  align-items:center;justify-content:center;
+  flex-direction:column;
+}
+#teslaLoader.show{display:flex}
+.loader-ring{
+  width:90px;height:90px;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.loader-ring svg.ring-svg{
+  position:absolute;inset:0;
+  width:90px;height:90px;
+  animation:teslaSpinRing 1.1s cubic-bezier(0.4,0,0.2,1) infinite;
+}
+@keyframes teslaSpinRing{
+  0%{transform:rotate(0deg)}
+  100%{transform:rotate(360deg)}
+}
+.loader-t-logo{
+  width:32px;height:32px;
+  position:relative;z-index:2;
+}
+
+
+/* ===== APR BANNER ===== */
+#aprBanner{
+  position:fixed;top:0;left:0;right:0;z-index:1100;
+  background:linear-gradient(90deg,#c8a96e 0%,#e8d5a3 40%,#d4bc82 60%,#c8a96e 100%);
+  text-align:center;padding:10px 20px;
+  font-size:14px;font-weight:500;color:#1a1a1a;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+#aprBanner a{color:#1a1a1a;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#aprBanner .close-banner{
+  position:absolute;right:16px;background:none;border:none;
+  font-size:18px;cursor:pointer;color:#1a1a1a;opacity:0.6;
+  line-height:1;
+}
+#aprBanner .close-banner:hover{opacity:1}
+
+/* When banner visible, push navbar down */
+body.banner-visible #navbar{top:40px}
+body.banner-visible .vehicle-section{scroll-snap-align:start}
+
+/* ===== TESLA FOOTER ===== */
+.tesla-footer{
+  scroll-snap-align:start;
+  background:#fff;
+  padding:48px 60px 40px;
+  border-top:1px solid #e8e8e8;
+  min-height:auto;
+}
+.footer-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;flex-wrap:wrap;gap:20px}
+.tesla-wordmark{display:flex;align-items:center}
+.tesla-wordmark svg{height:20px;width:auto}
+.footer-region{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--tesla-gray);cursor:pointer;font-weight:500}
+.footer-region:hover{color:var(--tesla-dark)}
+.footer-region svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+.footer-links{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-bottom:40px}
+.footer-col-title{font-size:13px;font-weight:700;color:var(--tesla-dark);margin-bottom:12px;letter-spacing:0.3px}
+.footer-col a{display:block;font-size:13px;color:var(--tesla-muted);margin-bottom:8px;text-decoration:none;cursor:pointer;transition:color 0.2s}
+.footer-col a:hover{color:var(--tesla-dark)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid #f0f0f0;flex-wrap:wrap;gap:12px}
+.footer-bottom-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-bottom-links a{font-size:12px;color:var(--tesla-muted);text-decoration:none;cursor:pointer}
+.footer-bottom-links a:hover{color:var(--tesla-dark)}
+.footer-copyright{font-size:12px;color:var(--tesla-muted)}
+
+/* Responsive */
+@media(max-width:600px){
+  #navbar{padding:12px 20px}
+  .nav-links{display:none}
+  .modal-box{padding:28px 20px}
+  .vehicle-name{font-size:32px}
+  .vehicle-actions{gap:10px}
+  .vbtn{min-width:140px;padding:12px 20px;font-size:13px}
+  .form-row{grid-template-columns:1fr}
+  .admin-stats{grid-template-columns:1fr 1fr}
+  #dashPage,#adminPage{padding:100px 16px 40px}
+  .footer-links{grid-template-columns:1fr 1fr}
+  .tesla-footer{padding:32px 20px 28px}
+  .footer-top{margin-bottom:28px}
+}
+</style>
+</head>
+<body>
+
+<!-- TESLA PAGE TRANSITION LOADER -->
+<div id="teslaLoader">
+  <div class="loader-ring">
+    <!-- Spinning arc ring — matches Tesla's loading screen exactly -->
+    <svg class="ring-svg" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="45" cy="45" r="40" stroke="#e0e0e0" stroke-width="3"/>
+      <path d="M45 5 A40 40 0 0 1 85 45" stroke="#5c5e62" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <!-- Tesla T logo in center -->
+    <svg class="loader-t-logo" viewBox="0 0 70 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M35 84L0 6.3C7.7 2.3 16.5 0 26 0h9c9.5 0 18.3 2.3 26 6.3L35 84z" fill="#8c8c8c"/>
+      <path d="M0 6.3C7 9.7 18.5 12 35 12S63 9.7 70 6.3C62.8 2.4 54 0 44.5 0h-19C16 0 7.2 2.4 0 6.3z" fill="#9e9e9e"/>
+    </svg>
+  </div>
+</div>
+
+<!-- APR BANNER -->
+<div id="aprBanner">
+  <span>0% APR Available</span>
+  <a onclick="alert('0% APR financing available on select Tesla vehicles. See tesla.com for details.')">Learn More</a>
+  <button class="close-banner" onclick="closeBanner()">×</button>
+</div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="nav-logo" onclick="showPage('homePage')" style="display:flex;align-items:center">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 35" style="height:18px;width:auto;fill:var(--tesla-dark)">
+      <path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h6.8V7.3L26 7h11a9.8 9.8 0 0 0 7-7H0zm238.6 0h-6.8v34.8H263a9.7 9.7 0 0 0 7-7h-31.3V.1zm-52.3 6.8c3.6-1 6.6-3.8 7.4-6.9l-38.1.1v7h24.4l-24.4 20.5v7.2h38.1v-7h-24.4l17-20.9zM85.7 34.8h6.9l-. V.1H85.7v34.7zm0 0"/>
+      <path d="M94.1.1a9.7 9.7 0 0 0 7.1 7h11l.4.1v27.6h6.9V7.2l.5-.1H131a9.8 9.8 0 0 0 7.1-7H94.1zM341.6 7V.1h-32.4a9.7 9.7 0 0 0-7.2 7h39.6zm0 13.8h-31.5v-6.9h31.5V13h-31.5a9.7 9.7 0 0 0-7.2 7v.1a9.7 9.7 0 0 0 7.2 7h31.5v-6.3zm0 14.1h-39.6a9.7 9.7 0 0 0 7.2 6.9h32.4V35z"/>
+    </svg>
+  </div>
+  <div class="nav-links">
+    <a onclick="scrollToVehicle(0)">Model 3</a>
+    <a onclick="scrollToVehicle(1)">Model Y</a>
+    <a onclick="scrollToVehicle(2)">Model X</a>
+    <a onclick="scrollToVehicle(3)">Model S</a>
+    <a onclick="scrollToVehicle(4)">Cybertruck</a>
+  </div>
+  <div class="nav-actions" id="navActions">
+    <button class="nav-btn nav-btn-ghost" onclick="openAuth('login')">Sign In</button>
+    <button class="nav-btn nav-btn-user" onclick="openAuth('signup')">Get Started</button>
+  </div>
+</nav>
+
+<!-- ===== AUTH PAGE ===== -->
+<div class="page" id="authPageWrap" style="display:none;position:fixed;inset:0;z-index:1500">
+  <div id="authPage">
+    <div class="auth-container">
+      <div class="auth-logo">TESLA<span>.</span></div>
+      <div class="auth-subtitle">Experience the future of driving</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create Account</button>
+      </div>
+      <!-- Login Form -->
+      <div id="loginForm">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="your@email.com"/>
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••"/>
+        </div>
+        <div class="auth-error" id="loginError"></div>
+        <button class="auth-btn" onclick="doLogin()">
+          <span id="loginBtnText">Sign In</span>
+        </button>
+      </div>
+      <!-- Signup Form -->
+      <div id="signupForm" style="display:none">
+        <div class="auth-field">
+          <label>Full Name</label>
+          <input type="text" id="signupName" placeholder="John Doe"/>
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="signupEmail" placeholder="your@email.com"/>
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="signupPassword" placeholder="Min. 6 characters"/>
+        </div>
+        <div class="auth-error" id="signupError"></div>
+        <button class="auth-btn" onclick="doSignup()">
+          <span id="signupBtnText">Create Account</span>
+        </button>
+      </div>
+      <div class="auth-divider">or</div>
+      <button class="auth-btn" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15)" onclick="closeAuth()">Continue Browsing</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOMEPAGE ===== -->
+<div class="page active" id="homePage">
+  <!-- Model 3 -->
+  <section class="vehicle-section v-model3">
+    <div class="vehicle-info">
+      <div class="vehicle-name">Model 3</div>
+      <div class="vehicle-tagline">From $38,990</div>
+      <div class="vehicle-sub">358 mi Range · 0–60 mph in 3.1s</div>
+    </div>
+    <div class="vehicle-actions">
+      <button class="vbtn vbtn-dark" onclick="requireAuth(()=>openOrder('Model 3','$38,990','https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png'))">Order Now</button>
+      <button class="vbtn vbtn-light" onclick="requireAuth(()=>openTestDrive('Model 3'))">Schedule Test Drive</button>
+    </div>
+  </section>
+  <!-- Model Y -->
+  <section class="vehicle-section v-modely">
+    <div class="vehicle-info">
+      <div class="vehicle-name">Model Y</div>
+      <div class="vehicle-tagline">From $44,990</div>
+      <div class="vehicle-sub">330 mi Range · 0–60 mph in 3.5s</div>
+    </div>
+    <div class="vehicle-actions">
+      <button class="vbtn vbtn-dark" onclick="requireAuth(()=>openOrder('Model Y','$44,990','https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png'))">Order Now</button>
+      <button class="vbtn vbtn-light" onclick="requireAuth(()=>openTestDrive('Model Y'))">Schedule Test Drive</button>
+    </div>
+  </section>
+  <!-- Model X -->
+  <section class="vehicle-section v-modelx">
+    <div class="vehicle-info">
+      <div class="vehicle-name">Model X</div>
+      <div class="vehicle-tagline">From $79,990</div>
+      <div class="vehicle-sub">351 mi Range · 0–60 mph in 2.5s</div>
+    </div>
+    <div class="vehicle-actions">
+      <button class="vbtn vbtn-dark" onclick="requireAuth(()=>openOrder('Model X','$79,990','https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png'))">Order Now</button>
+      <button class="vbtn vbtn-light" onclick="requireAuth(()=>openTestDrive('Model X'))">Schedule Test Drive</button>
+    </div>
+  </section>
+  <!-- Model S -->
+  <section class="vehicle-section v-models">
+    <div class="vehicle-info">
+      <div class="vehicle-name">Model S</div>
+      <div class="vehicle-tagline">From $74,990</div>
+      <div class="vehicle-sub">405 mi Range · 0–60 mph in 1.99s</div>
+    </div>
+    <div class="vehicle-actions">
+      <button class="vbtn vbtn-dark" onclick="requireAuth(()=>openOrder('Model S','$74,990','https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png'))">Order Now</button>
+      <button class="vbtn vbtn-light" onclick="requireAuth(()=>openTestDrive('Model S'))">Schedule Test Drive</button>
+    </div>
+  </section>
+  <!-- Cybertruck -->
+  <section class="vehicle-section v-cyber">
+    <div class="vehicle-info">
+      <div class="vehicle-name">Cybertruck</div>
+      <div class="vehicle-tagline">From $60,990</div>
+      <div class="vehicle-sub">340 mi Range · 0–60 mph in 2.6s</div>
+    </div>
+    <div class="vehicle-actions">
+      <button class="vbtn vbtn-dark" onclick="requireAuth(()=>openOrder('Cybertruck','$60,990','https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Cybertruck.png'))">Order Now</button>
+      <button class="vbtn vbtn-light" onclick="requireAuth(()=>openTestDrive('Cybertruck'))">Schedule Test Drive</button>
+    </div>
+  </section>
+
+  <!-- TESLA FOOTER -->
+  <footer class="tesla-footer">
+    <div class="footer-top">
+      <!-- Real Tesla Wordmark SVG -->
+      <div class="tesla-wordmark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 35" style="height:22px;fill:#171A20">
+          <path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h6.8V7.3L26 7h11a9.8 9.8 0 0 0 7-7H0zm238.6 0h-6.8v34.8H263a9.7 9.7 0 0 0 7-7h-31.3V.1zm-52.3 6.8c3.6-1 6.6-3.8 7.4-6.9l-38.1.1v7h24.4l-24.4 20.5v7.2h38.1v-7h-24.4l17-20.9zM85.7 34.8h6.9V.1H85.7v34.7zm0 0"/>
+          <path d="M94.1.1a9.7 9.7 0 0 0 7.1 7h11l.4.1v27.6h6.9V7.2l.5-.1H131a9.8 9.8 0 0 0 7.1-7H94.1zM341.6 7V.1h-32.4a9.7 9.7 0 0 0-7.2 7h39.6zm0 13.8h-31.5v-6.9h31.5V13h-31.5a9.7 9.7 0 0 0-7.2 7v.1a9.7 9.7 0 0 0 7.2 7h31.5v-6.3zm0 14.1h-39.6a9.7 9.7 0 0 0 7.2 6.9h32.4V35z"/>
+        </svg>
+      </div>
+      <div class="footer-region">
+        <!-- Globe icon -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        US
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <div class="footer-col">
+        <div class="footer-col-title">Vehicles</div>
+        <a>Model S</a><a>Model 3</a><a>Model X</a><a>Model Y</a><a>Cybertruck</a><a>Tesla Semi</a><a>Tesla Roadster</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Energy</div>
+        <a>Solar Panels</a><a>Solar Roof</a><a>Powerwall</a><a>Megapack</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Charging</div>
+        <a>Charging</a><a>Find a Supercharger</a><a>Home Charging</a><a>Destination Charging</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Company</div>
+        <a>About</a><a>Careers</a><a>Investor Relations</a><a>Contact</a><a>News</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-bottom-links">
+        <a>Privacy &amp; Legal</a>
+        <a>Vehicle Recalls</a>
+        <a>Contact</a>
+        <a>News</a>
+        <a>Get Updates</a>
+        <a>Locations</a>
+      </div>
+      <div class="footer-copyright">Tesla © 2024</div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== USER DASHBOARD ===== -->
+<div class="page" id="dashPage">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title" id="dashWelcome">My Tesla</div>
+      <div style="font-size:14px;color:var(--tesla-muted);margin-top:4px" id="dashEmail"></div>
+    </div>
+    <button class="nav-btn nav-btn-ghost" onclick="doLogout()">Sign Out</button>
+  </div>
+  <div class="dash-tabs">
+    <button class="dash-tab active" onclick="switchDashTab('orders')">My Orders</button>
+    <button class="dash-tab" onclick="switchDashTab('testdrives')">Test Drives</button>
+    <button class="dash-tab" onclick="switchDashTab('profile')">Profile</button>
+  </div>
+  <div class="dash-tab-content active" id="dtOrders">
+    <div id="ordersList"><div class="empty-state"><div class="empty-icon">🚗</div><div>No orders yet</div></div></div>
+  </div>
+  <div class="dash-tab-content" id="dtTestDrives">
+    <div id="testDrivesList"><div class="empty-state"><div class="empty-icon">📅</div><div>No test drives booked</div></div></div>
+  </div>
+  <div class="dash-tab-content" id="dtProfile">
+    <div style="max-width:420px">
+      <div class="form-group"><label>Full Name</label><input type="text" id="profileName" readonly style="background:#f9f9f9"/></div>
+      <div class="form-group"><label>Email</label><input type="email" id="profileEmail" readonly style="background:#f9f9f9"/></div>
+      <div class="form-group"><label>Member Since</label><input type="text" id="profileSince" readonly style="background:#f9f9f9"/></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN LOGIN ===== -->
+<div class="page" id="adminLoginPage">
+  <div style="min-height:100vh;background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#171A20);display:flex;align-items:center;justify-content:center;padding:20px">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(20px);border-radius:16px;padding:48px 40px;width:100%;max-width:400px;text-align:center">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 84" style="height:40px;margin-bottom:20px">
+        <path d="M35 84L0 6.3C7.7 2.3 16.5 0 26 0h9c9.5 0 18.3 2.3 26 6.3L35 84z" fill="#E82127"/>
+        <path d="M0 6.3C7 9.7 18.5 12 35 12S63 9.7 70 6.3C62.8 2.4 54 0 44.5 0h-19C16 0 7.2 2.4 0 6.3z" fill="#ff4a4a"/>
+      </svg>
+      <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">Admin Portal</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:32px">Restricted access only</div>
+      <div style="text-align:left;margin-bottom:16px">
+        <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Username</label>
+        <input id="adminUsername" type="text" placeholder="Enter username"
+          style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none"/>
+      </div>
+      <div style="text-align:left;margin-bottom:8px">
+        <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Password</label>
+        <input id="adminPassword" type="password" placeholder="Enter password"
+          style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none"/>
+      </div>
+      <div id="adminLoginError" style="color:#ff6b6b;font-size:13px;min-height:20px;margin-bottom:8px"></div>
+      <button onclick="doAdminLogin()"
+        style="width:100%;padding:15px;background:#E82127;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+        Access Dashboard
+      </button>
+      <div style="margin-top:20px">
+        <a onclick="showPage('homePage')" style="font-size:13px;color:rgba(255,255,255,0.3);cursor:pointer">← Back to Tesla</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<div class="page" id="adminPage">
+  <div class="admin-header">
+    <div class="admin-title">Tesla Admin Dashboard</div>
+    <button class="nav-btn" style="background:rgba(255,255,255,0.1);color:#fff;border:none" onclick="adminLogout()">Logout</button>
+  </div>
+  <div style="margin-top:20px">
+    <div class="admin-stats">
+      <div class="stat-card"><div class="stat-num" id="statUsers">0</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card"><div class="stat-num" id="statOrders">0</div><div class="stat-label">Total Orders</div></div>
+      <div class="stat-card"><div class="stat-num" id="statDrives">0</div><div class="stat-label">Test Drives</div></div>
+      <div class="stat-card"><div class="stat-num" id="statRevenue">$0</div><div class="stat-label">Est. Revenue</div></div>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" onclick="switchAdminTab('orders')">Orders</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('testdrives')">Test Drives</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('users')">Users</button>
+    </div>
+    <div id="adminOrdersTab">
+      <table class="admin-table">
+        <thead><tr><th>Ref</th><th>Customer</th><th>Vehicle</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody id="adminOrdersBody"><tr><td colspan="6" style="text-align:center;padding:30px;color:#999">No orders yet</td></tr></tbody>
+      </table>
+    </div>
+    <div id="adminDrivesTab" style="display:none">
+      <table class="admin-table">
+        <thead><tr><th>Ref</th><th>Customer</th><th>Vehicle</th><th>Date</th><th>Time</th><th>Location</th></tr></thead>
+        <tbody id="adminDrivesBody"><tr><td colspan="6" style="text-align:center;padding:30px;color:#999">No test drives yet</td></tr></tbody>
+      </table>
+    </div>
+    <div id="adminUsersTab" style="display:none">
+      <table class="admin-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Orders</th></tr></thead>
+        <tbody id="adminUsersBody"><tr><td colspan="4" style="text-align:center;padding:30px;color:#999">No users yet</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ORDER MODAL ===== -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    <div class="step-indicator" id="orderSteps">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <!-- Step 1: Personal Info -->
+    <div id="orderStep1">
+      <div class="modal-title">Complete Your Order</div>
+      <div class="modal-subtitle" id="orderVehicleLabel">Model 3 · $38,990</div>
+      <img id="orderCarImg" src="" style="width:100%;max-height:160px;object-fit:contain;margin-bottom:20px;border-radius:8px;background:#f4f4f4"/>
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><input type="text" id="oFirstName" placeholder="John"/></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="oLastName" placeholder="Doe"/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="oEmail" placeholder="john@example.com"/></div>
+      <div class="form-group"><label>Phone Number</label><input type="tel" id="oPhone" placeholder="+1 234 567 8900"/></div>
+      <div class="form-group"><label>Delivery Address</label><input type="text" id="oAddress" placeholder="123 Main St, City, State"/></div>
+      <div class="auth-error" id="oStep1Error"></div>
+      <button class="submit-btn" onclick="orderNext(2)">Continue to Payment →</button>
+    </div>
+
+    <!-- Step 2: Payment -->
+    <div id="orderStep2" style="display:none">
+      <div class="modal-title">Payment Details</div>
+      <div class="modal-subtitle">Your card information is encrypted and secure</div>
+      <!-- Flip Card -->
+      <div class="card-preview-wrap">
+        <div class="card-preview" id="cardPreview">
+          <!-- Front -->
+          <div class="card-face card-front">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div class="card-chip"></div>
+              <div style="color:rgba(255,255,255,0.4);font-size:10px;font-weight:700;letter-spacing:3px">TESLA</div>
+            </div>
+            <div class="card-number-display" id="cardNumDisplay">•••• •••• •••• ••••</div>
+            <div class="card-bottom-row">
+              <div class="card-expiry-display">
+                <div class="card-label-sm">Valid Thru</div>
+                <div class="card-value-sm" id="cardExpDisplay">MM / YY</div>
+              </div>
+              <div>
+                <div class="card-label-sm">Card Holder</div>
+                <div class="card-name-display card-value-sm" id="cardNameDisplay">FULL NAME</div>
+              </div>
+              <div class="card-network" id="cardNetworkDisplay">VISA</div>
+            </div>
+            <div class="card-watermark">◆◆◆◆</div>
+          </div>
+          <!-- Back -->
+          <div class="card-face card-back">
+            <div class="card-strip"></div>
+            <div class="card-cvv-area">
+              <span class="card-cvv-label">CVV</span>
+              <span class="card-cvv-value" id="cardCvvDisplay">•••</span>
+            </div>
+            <div style="padding:0 0 0 0">
+              <div style="font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-top:12px">This card is property of Tesla Financing. If found, return to the nearest Tesla service center.</div>
+            </div>
+            <div class="card-watermark">TESLA CARD</div>
+          </div>
+        </div>
+      </div>
+      <!-- Card Form -->
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--tesla-dark)">Card</div>
+      <div class="form-group">
+        <label>Name on Card</label>
+        <input type="text" id="cardName" placeholder="John Doe" oninput="updateCard()"/>
+      </div>
+      <div class="form-group">
+        <label>Card Number</label>
+        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNumber(this);updateCard()"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Expiration Month</label>
+          <select id="cardExpMonth" onchange="updateCard()">
+            <option value="">Month</option>
+            <option>01</option><option>02</option><option>03</option><option>04</option>
+            <option>05</option><option>06</option><option>07</option><option>08</option>
+            <option>09</option><option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Expiration Year</label>
+          <select id="cardExpYear" onchange="updateCard()">
+            <option value="">Year</option>
+            <option>2026</option><option>2027</option><option>2028</option>
+            <option>2029</option><option>2030</option><option>2031</option>
+            <option>2032</option><option>2033</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Security Code</label>
+          <input type="text" id="cardCvv" placeholder="CVV" maxlength="4"
+            onfocus="flipCard(true)" onblur="flipCard(false)" oninput="updateCard()"/>
+        </div>
+        <div class="form-group">
+          <label>Billing ZIP Code</label>
+          <input type="text" id="cardZip" placeholder="12345" maxlength="10"/>
+        </div>
+      </div>
+      <div class="auth-error" id="oStep2Error"></div>
+      <div style="display:flex;gap:12px">
+        <button class="submit-btn" style="background:#f4f4f4;color:var(--tesla-dark)" onclick="orderNext(1)">← Back</button>
+        <button class="submit-btn" id="payBtn" onclick="submitOrder()">Place Order</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div id="orderStep3" style="display:none">
+      <div class="success-screen">
+        <div class="success-icon">✓</div>
+        <div class="success-title">Order Confirmed!</div>
+        <div class="success-sub">Your Tesla is being processed. You'll receive a confirmation email shortly.</div>
+        <div class="ref-code" id="orderRefCode">REF-000000</div>
+        <button class="submit-btn" onclick="closeModal('orderModal');showPage('dashPage')">View My Orders</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEST DRIVE MODAL ===== -->
+<div class="modal-overlay" id="testDriveModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('testDriveModal')">✕</button>
+    <div class="step-indicator" id="tdSteps">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <!-- TD Step 1 -->
+    <div id="tdStep1">
+      <div class="modal-title">Schedule a Test Drive</div>
+      <div class="modal-subtitle" id="tdVehicleLabel">Tesla Model 3</div>
+      <div class="form-group">
+        <label>Preferred Location / City</label>
+        <input type="text" id="tdLocation" placeholder="e.g. Los Angeles, CA"/>
+      </div>
+      <div class="form-group">
+        <label>Preferred Date</label>
+        <input type="date" id="tdDate"/>
+      </div>
+      <div class="form-group">
+        <label>Preferred Time</label>
+        <div class="time-slots" id="timeSlots">
+          <div class="time-slot" onclick="selectTime(this,'9:00 AM')">9:00 AM</div>
+          <div class="time-slot" onclick="selectTime(this,'10:00 AM')">10:00 AM</div>
+          <div class="time-slot" onclick="selectTime(this,'11:00 AM')">11:00 AM</div>
+          <div class="time-slot" onclick="selectTime(this,'1:00 PM')">1:00 PM</div>
+          <div class="time-slot" onclick="selectTime(this,'2:00 PM')">2:00 PM</div>
+          <div class="time-slot" onclick="selectTime(this,'3:00 PM')">3:00 PM</div>
+          <div class="time-slot" onclick="selectTime(this,'4:00 PM')">4:00 PM</div>
+          <div class="time-slot" onclick="selectTime(this,'5:00 PM')">5:00 PM</div>
+        </div>
+      </div>
+      <div class="auth-error" id="tdStep1Error"></div>
+      <button class="submit-btn" onclick="tdNext(2)">Continue →</button>
+    </div>
+
+    <!-- TD Step 2 -->
+    <div id="tdStep2" style="display:none">
+      <div class="modal-title">Your Details</div>
+      <div class="modal-subtitle">We'll use this to confirm your booking</div>
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><input type="text" id="tdFirst" placeholder="John"/></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="tdLast" placeholder="Doe"/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="tdEmail" placeholder="john@example.com"/></div>
+      <div class="form-group"><label>Phone</label><input type="tel" id="tdPhone" placeholder="+1 234 567 8900"/></div>
+      <div class="form-group">
+        <label>Driver's License Number</label>
+        <input type="text" id="tdLicense" placeholder="DL-123456789"/>
+      </div>
+      <div class="auth-error" id="tdStep2Error"></div>
+      <div style="display:flex;gap:12px">
+        <button class="submit-btn" style="background:#f4f4f4;color:var(--tesla-dark)" onclick="tdNext(1)">← Back</button>
+        <button class="submit-btn" id="tdSubmitBtn" onclick="submitTestDrive()">Confirm Booking</button>
+      </div>
+    </div>
+
+    <!-- TD Step 3 -->
+    <div id="tdStep3" style="display:none">
+      <div class="success-screen">
+        <div class="success-icon">📅</div>
+        <div class="success-title">Test Drive Booked!</div>
+        <div class="success-sub">Your test drive has been scheduled. Check your email for confirmation details.</div>
+        <div class="ref-code" id="tdRefCode">TD-000000</div>
+        <button class="submit-btn" onclick="closeModal('testDriveModal');showPage('dashPage')">View My Bookings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== TESLA PAGE TRANSITION LOADER =====
+function showLoader(callback, duration = 1400) {
+  const loader = document.getElementById('teslaLoader');
+  loader.classList.add('show');
+  setTimeout(() => {
+    loader.classList.remove('show');
+    if (callback) callback();
+  }, duration);
+}
+
+// ===== APR BANNER =====
+function closeBanner() {
+  document.getElementById('aprBanner').style.display = 'none';
+  document.body.classList.remove('banner-visible');
+  document.getElementById('navbar').style.top = '0';
+}
+// Init banner offset
+document.body.classList.add('banner-visible');
+document.getElementById('navbar').style.top = '40px';
+
+// ===== FIREBASE CONFIG =====
+// ⚠️ REPLACE WITH YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyAai8mFCTYpylV5DTSpBu2Grt_9Bfz_DWo",
+  authDomain: "tesla1-5c71d.firebaseapp.com",
+  projectId: "tesla1-5c71d",
+  storageBucket: "tesla1-5c71d.firebasestorage.app",
+  messagingSenderId: "998795417398",
+  appId: "1:998795417398:web:ef046c3d8efaf054078597"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ===== EMAILJS CONFIG =====
+emailjs.init('G9_URc7W94VnzyNYo');
+const EMAILJS_SERVICE = 'service_nimi93';
+// ⚠️ Replace with your actual EmailJS template IDs
+const ORDER_TEMPLATE = 'template_order';
+const TESTDRIVE_TEMPLATE = 'template_testdrive';
+const ADMIN_EMAIL = 'your-admin@email.com'; // ⚠️ Replace
+
+// ===== STATE =====
+let currentUser = null;
+let currentUserData = null;
+let selectedTime = '';
+let currentOrderVehicle = '';
+let currentOrderPrice = '';
+let currentOrderImg = '';
+let currentTDVehicle = '';
+
+// ===== AUTH STATE =====
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUser = user;
+    const doc = await db.collection('users').doc(user.uid).get();
+    currentUserData = doc.exists ? doc.data() : {};
+    updateNavForUser();
+  } else {
+    currentUser = null;
+    currentUserData = null;
+    updateNavForGuest();
+  }
+});
+
+function updateNavForUser() {
+  const name = currentUserData?.name || currentUser.email;
+  document.getElementById('navActions').innerHTML = `
+    <button class="nav-btn nav-btn-ghost" onclick="showPage('dashPage');loadDashboard()">My Tesla</button>
+    <button class="nav-btn nav-btn-user" onclick="doLogout()">Sign Out</button>
+  `;
+}
+function updateNavForGuest() {
+  document.getElementById('navActions').innerHTML = `
+    <button class="nav-btn nav-btn-ghost" onclick="openAuth('login')">Sign In</button>
+    <button class="nav-btn nav-btn-user" onclick="openAuth('signup')">Get Started</button>
+  `;
+}
+
+// ===== AUTH FUNCTIONS =====
+function openAuth(tab) {
+  document.getElementById('authPageWrap').style.display = 'block';
+  switchAuthTab(tab);
+}
+function closeAuth() {
+  document.getElementById('authPageWrap').style.display = 'none';
+}
+function switchAuthTab(tab) {
+  document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+  document.getElementById('signupForm').style.display = tab==='signup'?'block':'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabSignup').classList.toggle('active', tab==='signup');
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtnText');
+  if (!email||!pass){errEl.textContent='Please fill in all fields';return}
+  btn.innerHTML='<span class="loading"></span>Signing in...';
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    closeAuth();
+    showPage('dashPage');
+    setTimeout(loadDashboard, 500);
+  } catch(e) {
+    errEl.textContent = friendlyError(e.code);
+  }
+  btn.textContent='Sign In';
+}
+
+async function doSignup() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pass = document.getElementById('signupPassword').value;
+  const errEl = document.getElementById('signupError');
+  const btn = document.getElementById('signupBtnText');
+  if (!name||!email||!pass){errEl.textContent='Please fill in all fields';return}
+  if (pass.length<6){errEl.textContent='Password must be at least 6 characters';return}
+  btn.innerHTML='<span class="loading"></span>Creating account...';
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await db.collection('users').doc(cred.user.uid).set({
+      name, email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeAuth();
+    showPage('dashPage');
+    setTimeout(loadDashboard, 500);
+  } catch(e) {
+    errEl.textContent = friendlyError(e.code);
+  }
+  btn.textContent='Create Account';
+}
+
+async function doLogout() {
+  await auth.signOut();
+  showPage('homePage');
+}
+
+function friendlyError(code) {
+  const map = {
+    'auth/user-not-found':'No account found with this email',
+    'auth/wrong-password':'Incorrect password',
+    'auth/email-already-in-use':'An account with this email already exists',
+    'auth/invalid-email':'Please enter a valid email',
+    'auth/weak-password':'Password is too weak',
+    'auth/too-many-requests':'Too many attempts. Please try again later',
+  };
+  return map[code] || 'Something went wrong. Please try again.';
+}
+
+function requireAuth(fn) {
+  if (currentUser) { fn(); }
+  else { openAuth('login'); sessionStorage.setItem('pendingAction', 'true'); }
+}
+
+// ===== PAGE NAVIGATION =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg = document.getElementById(id);
+  if (pg) pg.classList.add('active');
+  // Show/hide navbar
+  const nb = document.getElementById('navbar');
+  if (id==='adminPage') { nb.style.display='none'; }
+  else { nb.style.display='flex'; }
+  window.scrollTo(0,0);
+}
+
+function scrollToVehicle(idx) {
+  const sections = document.querySelectorAll('.vehicle-section');
+  if (sections[idx]) sections[idx].scrollIntoView({behavior:'smooth'});
+}
+
+// Navbar scroll effect
+const homeEl = document.getElementById('homePage');
+if (homeEl) {
+  homeEl.addEventListener('scroll', ()=>{
+    const nb = document.getElementById('navbar');
+    nb.classList.toggle('solid', homeEl.scrollTop > 50);
+  });
+}
+
+// ===== ORDER FLOW =====
+function openOrder(vehicle, price, img) {
+  showLoader(() => {
+    currentOrderVehicle = vehicle;
+    currentOrderPrice = price;
+    currentOrderImg = img;
+    document.getElementById('orderVehicleLabel').textContent = `Tesla ${vehicle} · ${price}`;
+    document.getElementById('orderCarImg').src = img;
+    if (currentUser) document.getElementById('oEmail').value = currentUser.email;
+    orderNext(1);
+    document.getElementById('orderModal').classList.add('open');
+  });
+}
+
+function orderNext(step) {
+  if (step===2) {
+    const fn = document.getElementById('oFirstName').value.trim();
+    const ln = document.getElementById('oLastName').value.trim();
+    const em = document.getElementById('oEmail').value.trim();
+    const ph = document.getElementById('oPhone').value.trim();
+    const ad = document.getElementById('oAddress').value.trim();
+    if (!fn||!ln||!em||!ph||!ad) { document.getElementById('oStep1Error').textContent='Please fill in all fields'; return; }
+    document.getElementById('oStep1Error').textContent='';
+  }
+  [1,2,3].forEach(i => {
+    const el = document.getElementById(`orderStep${i}`);
+    el.style.display = i===step ? 'block':'none';
+  });
+  updateStepDots('orderSteps', step, 3);
+}
+
+async function submitOrder() {
+  const name = document.getElementById('cardName').value.trim();
+  const num = document.getElementById('cardNumber').value.trim();
+  const month = document.getElementById('cardExpMonth').value;
+  const year = document.getElementById('cardExpYear').value;
+  const cvv = document.getElementById('cardCvv').value.trim();
+  const zip = document.getElementById('cardZip').value.trim();
+  if (!name||!num||!month||!year||!cvv||!zip) {
+    document.getElementById('oStep2Error').textContent='Please fill in all card details'; return;
+  }
+  const btn = document.getElementById('payBtn');
+  btn.innerHTML='<span class="loading"></span>Processing...';
+  btn.disabled=true;
+
+  const ref = 'TES-' + Math.random().toString(36).substr(2,8).toUpperCase();
+  const firstName = document.getElementById('oFirstName').value.trim();
+  const lastName = document.getElementById('oLastName').value.trim();
+  const email = document.getElementById('oEmail').value.trim();
+  const phone = document.getElementById('oPhone').value.trim();
+  const address = document.getElementById('oAddress').value.trim();
+
+  try {
+    await db.collection('orders').add({
+      refCode: ref,
+      userId: currentUser.uid,
+      userName: `${firstName} ${lastName}`,
+      userEmail: email,
+      userPhone: phone,
+      address,
+      vehicle: currentOrderVehicle,
+      price: currentOrderPrice,
+      cardLast4: num.slice(-4),
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // EmailJS - customer confirmation
+    try {
+      await emailjs.send(EMAILJS_SERVICE, ORDER_TEMPLATE, {
+        to_name: firstName,
+        to_email: email,
+        ref_code: ref,
+        vehicle: currentOrderVehicle,
+        price: currentOrderPrice,
+        address,
+      });
+    } catch(e) { console.log('EmailJS error:', e); }
+
+    document.getElementById('orderRefCode').textContent = ref;
+    orderNext(3);
+  } catch(e) {
+    document.getElementById('oStep2Error').textContent = 'Error placing order. Please try again.';
+  }
+  btn.innerHTML='Place Order';
+  btn.disabled=false;
+}
+
+// ===== TEST DRIVE FLOW =====
+function openTestDrive(vehicle) {
+  showLoader(() => {
+    currentTDVehicle = vehicle;
+    document.getElementById('tdVehicleLabel').textContent = `Tesla ${vehicle} Test Drive`;
+    if (currentUser) {
+      document.getElementById('tdEmail').value = currentUser.email;
+      if (currentUserData?.name) {
+        const parts = currentUserData.name.split(' ');
+        document.getElementById('tdFirst').value = parts[0]||'';
+        document.getElementById('tdLast').value = parts.slice(1).join(' ')||'';
+      }
+    }
+    tdNext(1);
+    document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('selected'));
+    selectedTime = '';
+    document.getElementById('testDriveModal').classList.add('open');
+  });
+}
+
+function tdNext(step) {
+  if (step===2) {
+    const loc = document.getElementById('tdLocation').value.trim();
+    const date = document.getElementById('tdDate').value;
+    if (!loc||!date||!selectedTime) {
+      document.getElementById('tdStep1Error').textContent='Please fill location, date and time'; return;
+    }
+    document.getElementById('tdStep1Error').textContent='';
+  }
+  [1,2,3].forEach(i => {
+    document.getElementById(`tdStep${i}`).style.display = i===step?'block':'none';
+  });
+  updateStepDots('tdSteps', step, 3);
+}
+
+function selectTime(el, time) {
+  document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTime = time;
+}
+
+async function submitTestDrive() {
+  const first = document.getElementById('tdFirst').value.trim();
+  const last = document.getElementById('tdLast').value.trim();
+  const email = document.getElementById('tdEmail').value.trim();
+  const phone = document.getElementById('tdPhone').value.trim();
+  const license = document.getElementById('tdLicense').value.trim();
+  if (!first||!last||!email||!phone||!license) {
+    document.getElementById('tdStep2Error').textContent='Please fill in all fields'; return;
+  }
+  const btn = document.getElementById('tdSubmitBtn');
+  btn.innerHTML='<span class="loading"></span>Booking...';
+  btn.disabled=true;
+
+  const ref = 'TD-' + Math.random().toString(36).substr(2,8).toUpperCase();
+  const location = document.getElementById('tdLocation').value.trim();
+  const date = document.getElementById('tdDate').value;
+
+  try {
+    await db.collection('testdrives').add({
+      refCode: ref,
+      userId: currentUser.uid,
+      userName: `${first} ${last}`,
+      userEmail: email,
+      userPhone: phone,
+      license,
+      vehicle: currentTDVehicle,
+      location,
+      date,
+      time: selectedTime,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    try {
+      await emailjs.send(EMAILJS_SERVICE, TESTDRIVE_TEMPLATE, {
+        to_name: first,
+        to_email: email,
+        ref_code: ref,
+        vehicle: currentTDVehicle,
+        date,
+        time: selectedTime,
+        location,
+      });
+    } catch(e) { console.log('EmailJS error:', e); }
+
+    document.getElementById('tdRefCode').textContent = ref;
+    tdNext(3);
+  } catch(e) {
+    document.getElementById('tdStep2Error').textContent = 'Error booking. Please try again.';
+  }
+  btn.innerHTML='Confirm Booking';
+  btn.disabled=false;
+}
+
+// ===== CARD FLIP & LIVE UPDATE =====
+function flipCard(toBack) {
+  document.getElementById('cardPreview').classList.toggle('flipped', toBack);
+}
+
+function updateCard() {
+  const name = document.getElementById('cardName').value || 'FULL NAME';
+  const num = document.getElementById('cardNumber').value.replace(/\s/g,'');
+  const month = document.getElementById('cardExpMonth').value || 'MM';
+  const year = document.getElementById('cardExpYear').value ? document.getElementById('cardExpYear').value.slice(-2) : 'YY';
+  const cvv = document.getElementById('cardCvv').value || '•••';
+
+  // Format number display
+  const masked = num.padEnd(16,'•').replace(/(.{4})/g,'$1 ').trim();
+  document.getElementById('cardNumDisplay').textContent = masked;
+  document.getElementById('cardNameDisplay').textContent = name.toUpperCase().substring(0,22);
+  document.getElementById('cardExpDisplay').textContent = `${month} / ${year}`;
+  document.getElementById('cardCvvDisplay').textContent = cvv;
+
+  // Auto-detect network
+  let network = 'VISA';
+  if (num.startsWith('5')||num.startsWith('2')) network='MC';
+  else if (num.startsWith('3')) network='AMEX';
+  else if (num.startsWith('6')) network='DISC';
+  document.getElementById('cardNetworkDisplay').textContent = network;
+}
+
+function formatCardNumber(input) {
+  let val = input.value.replace(/\D/g,'').substring(0,16);
+  input.value = val.replace(/(.{4})/g,'$1 ').trim();
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  if (!currentUser) return;
+  const userData = currentUserData || {};
+  document.getElementById('dashWelcome').textContent = `Welcome back, ${userData.name?.split(' ')[0] || 'there'}`;
+  document.getElementById('dashEmail').textContent = currentUser.email;
+  document.getElementById('profileName').value = userData.name || '';
+  document.getElementById('profileEmail').value = currentUser.email;
+  document.getElementById('profileSince').value = userData.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
+
+  // Load orders
+  const ordersSnap = await db.collection('orders').where('userId','==',currentUser.uid).orderBy('createdAt','desc').get();
+  const ordersList = document.getElementById('ordersList');
+  if (ordersSnap.empty) {
+    ordersList.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div><div>No orders yet</div></div>';
+  } else {
+    ordersList.innerHTML = ordersSnap.docs.map(d => {
+      const o = d.data();
+      const date = o.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
+      return `<div class="order-card">
+        <div><div class="order-vehicle">Tesla ${o.vehicle}</div><div class="order-date">${date} · ${o.refCode}</div></div>
+        <div style="text-align:right">
+          <div class="order-amount">${o.price}</div>
+          <span class="status-badge status-${o.status}">${o.status}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Load test drives
+  const tdSnap = await db.collection('testdrives').where('userId','==',currentUser.uid).orderBy('createdAt','desc').get();
+  const tdList = document.getElementById('testDrivesList');
+  if (tdSnap.empty) {
+    tdList.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div>No test drives booked</div></div>';
+  } else {
+    tdList.innerHTML = tdSnap.docs.map(d => {
+      const t = d.data();
+      return `<div class="booking-card">
+        <div><div class="order-vehicle">Tesla ${t.vehicle}</div><div class="order-date">${t.date} · ${t.time} · ${t.location}</div><div class="order-date">${t.refCode}</div></div>
+        <span class="status-badge status-${t.status}">${t.status}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+function switchDashTab(tab) {
+  document.querySelectorAll('.dash-tab').forEach((t,i)=>{
+    const tabs = ['orders','testdrives','profile'];
+    t.classList.toggle('active', tabs[i]===tab);
+  });
+  document.getElementById('dtOrders').classList.toggle('active', tab==='orders');
+  document.getElementById('dtTestDrives').classList.toggle('active', tab==='testdrives');
+  document.getElementById('dtProfile').classList.toggle('active', tab==='profile');
+}
+
+// ===== ADMIN DASHBOARD =====
+// To access admin: add ?admin=true to URL and be logged in
+async function loadAdmin() {
+  const [ordersSnap, drivesSnap, usersSnap] = await Promise.all([
+    db.collection('orders').orderBy('createdAt','desc').get(),
+    db.collection('testdrives').orderBy('createdAt','desc').get(),
+    db.collection('users').get()
+  ]);
+
+  document.getElementById('statOrders').textContent = ordersSnap.size;
+  document.getElementById('statDrives').textContent = drivesSnap.size;
+  document.getElementById('statUsers').textContent = usersSnap.size;
+
+  // Revenue estimate
+  let revenue = 0;
+  ordersSnap.forEach(d => {
+    const p = d.data().price?.replace(/[^0-9]/g,'');
+    if (p) revenue += parseInt(p);
+  });
+  document.getElementById('statRevenue').textContent = '$' + revenue.toLocaleString();
+
+  // Orders table
+  const ob = document.getElementById('adminOrdersBody');
+  ob.innerHTML = ordersSnap.empty ? '<tr><td colspan="6" style="text-align:center;padding:30px;color:#999">No orders</td></tr>' :
+    ordersSnap.docs.map(d => {
+      const o = d.data();
+      const date = o.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
+      return `<tr><td>${o.refCode}</td><td>${o.userName}<br><span style="color:#999;font-size:11px">${o.userEmail}</span></td><td>${o.vehicle}</td><td>${o.price}</td><td>${date}</td><td><span class="status-badge status-${o.status}">${o.status}</span></td></tr>`;
+    }).join('');
+
+  // Drives table
+  const db2 = document.getElementById('adminDrivesBody');
+  db2.innerHTML = drivesSnap.empty ? '<tr><td colspan="6" style="text-align:center;padding:30px;color:#999">No test drives</td></tr>' :
+    drivesSnap.docs.map(d => {
+      const t = d.data();
+      return `<tr><td>${t.refCode}</td><td>${t.userName}<br><span style="color:#999;font-size:11px">${t.userEmail}</span></td><td>${t.vehicle}</td><td>${t.date}</td><td>${t.time}</td><td>${t.location}</td></tr>`;
+    }).join('');
+
+  // Users table
+  const ub = document.getElementById('adminUsersBody');
+  ub.innerHTML = usersSnap.empty ? '<tr><td colspan="4" style="text-align:center;padding:30px;color:#999">No users</td></tr>' :
+    usersSnap.docs.map(d => {
+      const u = d.data();
+      const date = u.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
+      return `<tr><td>${u.name}</td><td>${u.email}</td><td>${date}</td><td>-</td></tr>`;
+    }).join('');
+}
+
+function switchAdminTab(tab) {
+  document.getElementById('adminOrdersTab').style.display = tab==='orders'?'block':'none';
+  document.getElementById('adminDrivesTab').style.display = tab==='testdrives'?'block':'none';
+  document.getElementById('adminUsersTab').style.display = tab==='users'?'block':'none';
+  document.querySelectorAll('.admin-tab-btn').forEach((b,i) => {
+    const tabs=['orders','testdrives','users'];
+    b.classList.toggle('active', tabs[i]===tab);
+  });
+}
+
+// ===== UTILITIES =====
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function updateStepDots(containerId, activeStep, total) {
+  const dots = document.getElementById(containerId).querySelectorAll('.step-dot');
+  dots.forEach((d,i) => {
+    d.classList.remove('active','done');
+    if (i+1 === activeStep) d.classList.add('active');
+    else if (i+1 < activeStep) d.classList.add('done');
+  });
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) m.classList.remove('open');
+  });
+});
+
+// ===== ADMIN LOGIN =====
+const ADMIN_USERNAME = 'Nimi93';
+const ADMIN_PASSWORD = '07048199203';
+
+function doAdminLogin() {
+  const user = document.getElementById('adminUsername').value.trim();
+  const pass = document.getElementById('adminPassword').value.trim();
+  const err = document.getElementById('adminLoginError');
+  if (!user || !pass) { err.textContent = 'Please enter username and password'; return; }
+  if (user === ADMIN_USERNAME && pass === ADMIN_PASSWORD) {
+    err.textContent = '';
+    sessionStorage.setItem('adminAuth', 'true');
+    showPage('adminPage');
+    loadAdmin();
+  } else {
+    err.textContent = 'Incorrect username or password';
+    document.getElementById('adminUsername').value = '';
+    document.getElementById('adminPassword').value = '';
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('adminAuth');
+  showPage('homePage');
+}
+
+// Allow Enter key on admin login
+document.addEventListener('DOMContentLoaded', () => {
+  const adminPass = document.getElementById('adminPassword');
+  if (adminPass) adminPass.addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+  const adminUser = document.getElementById('adminUsername');
+  if (adminUser) adminUser.addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+});
+
+// Check for admin URL — now shows login page instead
+if (window.location.search.includes('admin=true')) {
+  showPage('adminLoginPage');
+}
+
+</script>
+</body>
+</html>
