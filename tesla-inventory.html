@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tesla Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --t-red:#E82127;
+  --t-dark:#171A20;
+  --t-gray:#393C41;
+  --t-muted:#5C5E62;
+  --t-light:#F4F4F4;
+  --t-border:#E0E0E0;
+  --t-white:#FFFFFF;
+  --t-green:#00A550;
+  --discount-bg:#FFF8E1;
+  --discount-color:#E65100;
+  --bg:#FAFAFA;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t-dark);overflow-x:hidden}
+
+/* ===== BANNER ===== */
+#discountBanner{
+  background:linear-gradient(90deg,#171A20 0%,#E82127 50%,#171A20 100%);
+  color:#fff;text-align:center;padding:11px 20px;
+  font-size:13px;font-weight:600;letter-spacing:0.5px;
+  position:sticky;top:0;z-index:200;
+}
+#discountBanner span{background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:20px;margin-left:8px}
+
+/* ===== HEADER ===== */
+#siteHeader{
+  position:sticky;top:40px;z-index:199;
+  background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--t-border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:56px;
+}
+.header-logo{
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+}
+.header-logo svg{height:16px;fill:var(--t-dark)}
+.header-nav{display:flex;gap:0;height:100%}
+.header-nav a{
+  display:flex;align-items:center;padding:0 18px;
+  font-size:13px;font-weight:500;color:var(--t-gray);
+  text-decoration:none;cursor:pointer;border-bottom:2px solid transparent;
+  transition:all 0.2s;height:100%;
+}
+.header-nav a:hover,.header-nav a.active{color:var(--t-dark);border-bottom-color:var(--t-dark)}
+.header-right{display:flex;align-items:center;gap:16px}
+.zip-input{
+  display:flex;align-items:center;gap:8px;
+  border:1.5px solid var(--t-border);border-radius:8px;
+  padding:7px 12px;font-size:13px;background:#fff;
+}
+.zip-input input{border:none;outline:none;width:80px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--t-dark)}
+.zip-input svg{width:14px;height:14px;fill:var(--t-muted)}
+.dark-toggle{
+  background:none;border:1.5px solid var(--t-border);border-radius:8px;
+  padding:7px 10px;cursor:pointer;font-size:16px;transition:all 0.2s;
+}
+.dark-toggle:hover{background:var(--t-light)}
+
+/* ===== PAGES ===== */
+.page{display:none}
+.page.active{display:block}
+
+/* ===== INVENTORY PAGE ===== */
+#inventoryPage{padding:28px 40px 60px}
+.inv-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.inv-title{font-size:24px;font-weight:700;color:var(--t-dark)}
+.inv-count{font-size:14px;color:var(--t-muted);margin-top:2px}
+.filters{display:flex;gap:10px;flex-wrap:wrap}
+.filter-btn{
+  padding:8px 16px;border:1.5px solid var(--t-border);border-radius:20px;
+  background:#fff;font-size:13px;font-weight:500;color:var(--t-gray);
+  cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.filter-btn:hover,.filter-btn.active{background:var(--t-dark);color:#fff;border-color:var(--t-dark)}
+.filter-select{
+  padding:8px 14px;border:1.5px solid var(--t-border);border-radius:20px;
+  background:#fff;font-size:13px;color:var(--t-gray);cursor:pointer;
+  outline:none;font-family:'DM Sans',sans-serif;
+}
+
+/* ===== INVENTORY GRID ===== */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px}
+.inv-card{
+  background:#fff;border-radius:16px;overflow:hidden;
+  border:1.5px solid var(--t-border);
+  transition:all 0.3s;cursor:pointer;
+  position:relative;
+}
+.inv-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.1);border-color:transparent}
+.inv-card-badge{
+  position:absolute;top:14px;left:14px;z-index:2;
+  background:var(--t-red);color:#fff;
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.5px;
+}
+.inv-card-badge.used{background:var(--t-gray)}
+.inv-card-img{
+  width:100%;height:200px;object-fit:cover;
+  background:linear-gradient(135deg,#f0f0f0,#e8e8e8);
+  display:block;transition:transform 0.4s;
+}
+.inv-card:hover .inv-card-img{transform:scale(1.03)}
+.inv-card-body{padding:20px}
+.inv-card-model{font-size:18px;font-weight:700;color:var(--t-dark);margin-bottom:4px}
+.inv-card-trim{font-size:13px;color:var(--t-muted);margin-bottom:14px}
+.inv-price-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:6px}
+.inv-price-orig{font-size:13px;color:var(--t-muted);text-decoration:line-through}
+.inv-price-disc{font-size:22px;font-weight:700;color:var(--t-dark)}
+.inv-savings{
+  display:inline-block;background:var(--discount-bg);color:var(--discount-color);
+  font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;margin-bottom:14px;
+}
+.inv-specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.inv-spec{display:flex;flex-direction:column}
+.inv-spec-val{font-size:14px;font-weight:600;color:var(--t-dark)}
+.inv-spec-label{font-size:11px;color:var(--t-muted);margin-top:1px}
+.inv-monthly{
+  background:var(--t-light);border-radius:8px;padding:10px 14px;
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;
+}
+.inv-monthly-label{font-size:12px;color:var(--t-muted)}
+.inv-monthly-val{font-size:15px;font-weight:700;color:var(--t-dark)}
+.inv-supercharge{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--t-green);font-weight:600;
+}
+.inv-card-btn{
+  width:100%;padding:12px;background:var(--t-dark);color:#fff;
+  border:none;border-radius:8px;font-size:14px;font-weight:600;
+  cursor:pointer;margin-top:14px;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.inv-card-btn:hover{background:#000}
+
+/* ===== PRODUCT PAGE ===== */
+#productPage{padding:0 0 80px}
+.product-hero{
+  width:100%;height:55vh;min-height:360px;
+  position:relative;overflow:hidden;background:#0a0a0a;
+}
+.product-hero img{width:100%;height:100%;object-fit:cover;opacity:0.85}
+.product-hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.7));
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:40px;
+}
+.product-model-name{font-size:48px;font-weight:700;color:#fff;letter-spacing:-2px;font-family:'DM Serif Display',serif}
+.product-specs-row{display:flex;gap:32px;margin-top:12px;flex-wrap:wrap}
+.product-spec-item{text-align:center}
+.product-spec-val{font-size:20px;font-weight:700;color:#fff}
+.product-spec-label{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;letter-spacing:0.5px;text-transform:uppercase}
+
+.product-body{max-width:1100px;margin:0 auto;padding:0 40px}
+
+/* Payment tabs */
+.payment-section{margin:36px 0 0}
+.payment-section-title{font-size:20px;font-weight:700;margin-bottom:20px}
+.pay-tabs{display:flex;gap:0;border:1.5px solid var(--t-border);border-radius:10px;overflow:hidden;margin-bottom:24px;width:fit-content}
+.pay-tab{
+  padding:12px 28px;font-size:14px;font-weight:600;
+  background:#fff;color:var(--t-muted);border:none;cursor:pointer;
+  transition:all 0.2s;font-family:'DM Sans',sans-serif;border-right:1.5px solid var(--t-border);
+}
+.pay-tab:last-child{border-right:none}
+.pay-tab.active{background:var(--t-dark);color:#fff}
+.pay-content{display:none}
+.pay-content.active{display:block}
+
+.pay-price-display{margin-bottom:20px}
+.pay-orig-price{font-size:15px;color:var(--t-muted);text-decoration:line-through;margin-bottom:4px}
+.pay-disc-price{font-size:36px;font-weight:700;color:var(--t-dark)}
+.pay-savings-tag{
+  display:inline-block;background:var(--discount-bg);color:var(--discount-color);
+  font-size:12px;font-weight:700;padding:4px 10px;border-radius:4px;margin-top:6px;
+}
+
+.pay-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--t-border)}
+.pay-row:last-child{border-bottom:none}
+.pay-row-label{font-size:14px;color:var(--t-gray)}
+.pay-row-val{font-size:14px;font-weight:600;color:var(--t-dark)}
+
+.fsd-toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--t-light);border-radius:10px;padding:14px 18px;margin:16px 0;
+}
+.fsd-label{font-size:14px;font-weight:600}
+.fsd-sub{font-size:12px;color:var(--t-muted);margin-top:2px}
+.toggle-switch{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s;
+}
+.toggle-slider:before{
+  content:'';position:absolute;height:18px;width:18px;
+  left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;
+}
+.toggle-switch input:checked + .toggle-slider{background:var(--t-dark)}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px)}
+
+.term-selector{margin:16px 0}
+.term-selector label{font-size:13px;font-weight:600;color:var(--t-gray);display:block;margin-bottom:8px}
+.term-options{display:flex;gap:8px;flex-wrap:wrap}
+.term-opt{
+  padding:8px 16px;border:1.5px solid var(--t-border);border-radius:8px;
+  font-size:13px;font-weight:500;cursor:pointer;background:#fff;
+  transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.term-opt.selected{background:var(--t-dark);color:#fff;border-color:var(--t-dark)}
+
+.monthly-summary{
+  background:var(--t-dark);color:#fff;border-radius:12px;
+  padding:20px 24px;margin-top:20px;
+}
+.monthly-summary-label{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:6px}
+.monthly-summary-val{font-size:32px;font-weight:700}
+.monthly-summary-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px}
+
+/* Vehicle details */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:32px 0;border:1.5px solid var(--t-border);border-radius:12px;overflow:hidden}
+.detail-item{padding:16px 20px;border-bottom:1px solid var(--t-border);border-right:1px solid var(--t-border)}
+.detail-item:nth-child(even){border-right:none}
+.detail-item:nth-last-child(-n+2){border-bottom:none}
+.detail-item-label{font-size:11px;color:var(--t-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.detail-item-val{font-size:14px;font-weight:600;color:var(--t-dark)}
+
+/* Warranty */
+.warranty-section{margin:32px 0}
+.warranty-title{font-size:18px;font-weight:700;margin-bottom:16px}
+.warranty-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.warranty-card{background:#fff;border:1.5px solid var(--t-border);border-radius:12px;padding:20px}
+.warranty-icon{font-size:24px;margin-bottom:10px}
+.warranty-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.warranty-detail{font-size:13px;color:var(--t-muted)}
+
+/* Delivery */
+.delivery-section{background:#fff;border:1.5px solid var(--t-border);border-radius:12px;padding:24px;margin:32px 0}
+.delivery-title{font-size:18px;font-weight:700;margin-bottom:16px}
+.delivery-field{margin-bottom:16px}
+.delivery-field label{display:block;font-size:13px;font-weight:500;color:var(--t-gray);margin-bottom:6px}
+.delivery-field input{
+  width:100%;max-width:300px;padding:12px 16px;
+  border:1.5px solid var(--t-border);border-radius:8px;
+  font-size:14px;font-family:'DM Sans',sans-serif;outline:none;
+}
+.delivery-field input:focus{border-color:var(--t-dark)}
+.charger-option{
+  display:flex;align-items:center;gap:12px;
+  background:var(--t-light);border-radius:8px;padding:14px 16px;margin-top:8px;cursor:pointer;
+}
+.charger-option input[type=checkbox]{width:18px;height:18px;cursor:pointer}
+.charger-label{font-size:14px;font-weight:500}
+.charger-sub{font-size:12px;color:var(--t-muted);margin-top:2px}
+
+/* CTA buttons */
+.product-cta{display:flex;gap:14px;margin:28px 0;flex-wrap:wrap}
+.cta-btn-primary{
+  flex:1;min-width:160px;padding:16px 28px;
+  background:var(--t-dark);color:#fff;border:none;border-radius:8px;
+  font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.cta-btn-primary:hover{background:#000;transform:translateY(-1px)}
+.cta-btn-secondary{
+  flex:1;min-width:160px;padding:16px 28px;
+  background:#fff;color:var(--t-dark);border:1.5px solid var(--t-dark);border-radius:8px;
+  font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.cta-btn-secondary:hover{background:var(--t-light)}
+
+/* Back btn */
+.back-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:14px;font-weight:500;color:var(--t-muted);
+  cursor:pointer;padding:16px 40px;transition:color 0.2s;
+  background:none;border:none;font-family:'DM Sans',sans-serif;
+}
+.back-btn:hover{color:var(--t-dark)}
+
+/* ===== ADMIN PAGE ===== */
+#adminPage{padding:80px 40px 60px;max-width:900px;margin:0 auto}
+.admin-fixed-header{
+  position:fixed;top:0;left:0;right:0;z-index:300;
+  background:var(--t-dark);color:#fff;padding:16px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.admin-section{background:#fff;border:1.5px solid var(--t-border);border-radius:12px;padding:28px;margin-bottom:24px}
+.admin-section-title{font-size:16px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--t-border)}
+.admin-field{margin-bottom:16px}
+.admin-field label{display:block;font-size:13px;font-weight:500;color:var(--t-gray);margin-bottom:6px}
+.admin-field input,.admin-field select{
+  padding:11px 14px;border:1.5px solid var(--t-border);border-radius:8px;
+  font-size:14px;font-family:'DM Sans',sans-serif;outline:none;min-width:160px;
+}
+.admin-field input:focus{border-color:var(--t-dark)}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.save-btn{
+  padding:12px 28px;background:var(--t-dark);color:#fff;border:none;
+  border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all 0.2s;
+}
+.save-btn:hover{background:#000}
+.saved-msg{color:var(--t-green);font-size:13px;font-weight:600;margin-left:12px;opacity:0;transition:opacity 0.3s}
+.saved-msg.show{opacity:1}
+
+/* ===== ADMIN LOGIN ===== */
+#adminLoginPage{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#171A20);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.admin-login-box{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(20px);border-radius:16px;padding:48px 40px;
+  width:100%;max-width:400px;text-align:center;
+}
+
+/* Dark mode */
+body.dark{
+  --bg:#0d0d0d;--t-dark:#fff;--t-border:#2a2a2a;--t-light:#1a1a1a;
+  background:#0d0d0d;color:#fff;
+}
+body.dark .inv-card,body.dark .delivery-section,body.dark .warranty-card,body.dark .admin-section{background:#141414;border-color:#2a2a2a}
+body.dark #siteHeader{background:rgba(13,13,13,0.97);border-color:#2a2a2a}
+body.dark .filter-btn,body.dark .pay-tab,body.dark .term-opt,body.dark .zip-input,body.dark .dark-toggle{background:#141414;border-color:#2a2a2a;color:#ccc}
+body.dark .pay-tab.active,.dark .filter-btn.active,.dark .term-opt.selected{background:#fff;color:#000}
+
+/* Responsive */
+@media(max-width:768px){
+  #siteHeader{padding:0 16px}
+  .header-nav{display:none}
+  #inventoryPage{padding:20px 16px 60px}
+  .product-body{padding:0 16px}
+  .product-model-name{font-size:32px}
+  .product-specs-row{gap:20px}
+  .detail-grid,.warranty-cards{grid-template-columns:1fr}
+  .detail-item:nth-child(even){border-right:none}
+  .detail-item{border-right:none}
+  .admin-grid{grid-template-columns:1fr}
+  #adminPage{padding:80px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<!-- DISCOUNT BANNER -->
+<div id="discountBanner">
+  🔥 20% off all inventory — limited time! <span>Shop Now</span>
+</div>
+
+<!-- SITE HEADER -->
+<header id="siteHeader">
+  <div class="header-logo" onclick="showPage('inventoryPage')">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 35">
+      <path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h6.8V7.3L26 7h11a9.8 9.8 0 0 0 7-7H0zm238.6 0h-6.8v34.8H263a9.7 9.7 0 0 0 7-7h-31.3V.1zm-52.3 6.8c3.6-1 6.6-3.8 7.4-6.9l-38.1.1v7h24.4l-24.4 20.5v7.2h38.1v-7h-24.4l17-20.9zM85.7 34.8h6.9V.1H85.7v34.7z"/>
+      <path d="M94.1.1a9.7 9.7 0 0 0 7.1 7h11l.4.1v27.6h6.9V7.2l.5-.1H131a9.8 9.8 0 0 0 7.1-7H94.1zM341.6 7V.1h-32.4a9.7 9.7 0 0 0-7.2 7h39.6zm0 13.8h-31.5v-6.9h31.5V13h-31.5a9.7 9.7 0 0 0-7.2 7v.1a9.7 9.7 0 0 0 7.2 7h31.5v-6.3zm0 14.1h-39.6a9.7 9.7 0 0 0 7.2 6.9h32.4V35z"/>
+    </svg>
+  </div>
+  <nav class="header-nav">
+    <a onclick="showPage('inventoryPage')" class="active" id="navInv">Inventory</a>
+    <a href="tesla-clone.html">Home</a>
+    <a onclick="showPage('adminLoginPage')" id="navAdmin">Admin</a>
+  </nav>
+  <div class="header-right">
+    <div class="zip-input">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <input type="text" id="zipInput" placeholder="Enter ZIP" maxlength="10"/>
+    </div>
+    <button class="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+  </div>
+</header>
+
+<!-- ===== INVENTORY PAGE ===== -->
+<div class="page active" id="inventoryPage">
+  <div class="inv-toolbar">
+    <div>
+      <div class="inv-title">Tesla Inventory</div>
+      <div class="inv-count" id="invCount">5 vehicles available</div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterCondition('all',this)">All</button>
+      <button class="filter-btn" onclick="filterCondition('new',this)">New</button>
+      <button class="filter-btn" onclick="filterCondition('used',this)">Used</button>
+      <select class="filter-select" onchange="filterModel(this.value)">
+        <option value="all">All Models</option>
+        <option value="Model 3">Model 3</option>
+        <option value="Model Y">Model Y</option>
+        <option value="Model S">Model S</option>
+        <option value="Model X">Model X</option>
+        <option value="Cybertruck">Cybertruck</option>
+      </select>
+    </div>
+  </div>
+  <div class="inv-grid" id="invGrid"></div>
+</div>
+
+<!-- ===== PRODUCT PAGE ===== -->
+<div class="page" id="productPage">
+  <button class="back-btn" onclick="showPage('inventoryPage')">← Back to Inventory</button>
+  <div class="product-hero">
+    <img id="productHeroImg" src="" alt=""/>
+    <div class="product-hero-overlay">
+      <div class="product-model-name" id="productName">Model 3</div>
+      <div class="product-specs-row">
+        <div class="product-spec-item">
+          <div class="product-spec-val" id="pRange">-</div>
+          <div class="product-spec-label">Range (EPA est.)</div>
+        </div>
+        <div class="product-spec-item">
+          <div class="product-spec-val" id="pSpeed">-</div>
+          <div class="product-spec-label">Top Speed</div>
+        </div>
+        <div class="product-spec-item">
+          <div class="product-spec-val" id="pAccel">-</div>
+          <div class="product-spec-label">0–60 mph</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-body">
+    <!-- Payment Section -->
+    <div class="payment-section">
+      <div class="payment-section-title">Choose how to pay</div>
+      <div class="pay-tabs">
+        <button class="pay-tab active" onclick="switchPayTab('cash',this)">Cash</button>
+        <button class="pay-tab" onclick="switchPayTab('lease',this)">Lease</button>
+        <button class="pay-tab" onclick="switchPayTab('finance',this)">Finance</button>
+      </div>
+
+      <!-- CASH TAB -->
+      <div class="pay-content active" id="tabCash">
+        <div class="pay-price-display">
+          <div class="pay-orig-price" id="cashOrig"></div>
+          <div class="pay-disc-price" id="cashDisc"></div>
+          <div class="pay-savings-tag" id="cashSavings"></div>
+        </div>
+        <div class="fsd-toggle-row">
+          <div>
+            <div class="fsd-label">Full Self-Driving (FSD)</div>
+            <div class="fsd-sub" id="cashFsdSub">+$99/mo subscription</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cashFsd" onchange="updatePayments()"/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="pay-row"><span class="pay-row-label">Vehicle Price</span><span class="pay-row-val" id="cashVehiclePrice">-</span></div>
+        <div class="pay-row" id="cashFsdRow" style="display:none"><span class="pay-row-label">FSD Subscription</span><span class="pay-row-val" id="cashFsdVal">+$99/mo</span></div>
+        <div class="pay-row"><span class="pay-row-label">Estimated Savings</span><span class="pay-row-val" style="color:var(--t-green)" id="cashSavingsRow">-</span></div>
+      </div>
+
+      <!-- LEASE TAB -->
+      <div class="pay-content" id="tabLease">
+        <div class="pay-price-display">
+          <div class="pay-orig-price" id="leaseOrig"></div>
+          <div class="pay-disc-price" id="leaseDisc"></div>
+        </div>
+        <div class="term-selector">
+          <label>Lease Term</label>
+          <div class="term-options" id="leaseTerms"></div>
+        </div>
+        <div class="fsd-toggle-row">
+          <div>
+            <div class="fsd-label">Full Self-Driving (FSD)</div>
+            <div class="fsd-sub" id="leaseFsdSub">+$99/mo subscription</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="leaseFsd" onchange="updatePayments()"/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="monthly-summary">
+          <div class="monthly-summary-label">Estimated Monthly Payment</div>
+          <div class="monthly-summary-val" id="leaseMonthly">$0/mo</div>
+          <div class="monthly-summary-sub" id="leaseSub">Based on selected term</div>
+        </div>
+      </div>
+
+      <!-- FINANCE TAB -->
+      <div class="pay-content" id="tabFinance">
+        <div class="pay-price-display">
+          <div class="pay-orig-price" id="financeOrig"></div>
+          <div class="pay-disc-price" id="financeDisc"></div>
+        </div>
+        <div class="pay-row"><span class="pay-row-label">Down Payment</span><span class="pay-row-val" id="financeDown">-</span></div>
+        <div class="pay-row"><span class="pay-row-label">Remaining Balance</span><span class="pay-row-val" id="financeBalance">-</span></div>
+        <div class="term-selector" id="financeTermWrap">
+          <label>Repayment Period</label>
+          <div class="term-options" id="financeTerms"></div>
+        </div>
+        <div class="fsd-toggle-row">
+          <div>
+            <div class="fsd-label">Full Self-Driving (FSD)</div>
+            <div class="fsd-sub" id="financeFsdSub">+$99/mo subscription</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="financeFsd" onchange="updatePayments()"/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="monthly-summary">
+          <div class="monthly-summary-label">Estimated Monthly Payment</div>
+          <div class="monthly-summary-val" id="financeMonthly">$0/mo</div>
+          <div class="monthly-summary-sub" id="financeSub">Remaining balance ÷ months</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vehicle Details -->
+    <div class="detail-grid" id="detailGrid"></div>
+
+    <!-- Warranty -->
+    <div class="warranty-section">
+      <div class="warranty-title">Warranty Coverage</div>
+      <div class="warranty-cards">
+        <div class="warranty-card">
+          <div class="warranty-icon">🛡️</div>
+          <div class="warranty-name">Limited Warranty</div>
+          <div class="warranty-detail">4 years or 50,000 miles, whichever comes first</div>
+        </div>
+        <div class="warranty-card">
+          <div class="warranty-icon">⚡</div>
+          <div class="warranty-name">Battery & Drive Unit</div>
+          <div class="warranty-detail">8 years or 100,000 miles, whichever comes first</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery -->
+    <div class="delivery-section">
+      <div class="delivery-title">Delivery & Registration</div>
+      <div class="delivery-field">
+        <label>Registration ZIP Code</label>
+        <input type="text" id="deliveryZip" placeholder="e.g. 90210" maxlength="10"/>
+      </div>
+      <div class="charger-option" onclick="document.getElementById('chargerCheck').click()">
+        <input type="checkbox" id="chargerCheck"/>
+        <div>
+          <div class="charger-label">🔌 Add Home Charger (Wall Connector)</div>
+          <div class="charger-sub">Up to 44 miles of range per hour of charging · $400 installed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="product-cta">
+      <button class="cta-btn-primary" onclick="alert('Order placed! Redirecting to checkout...')">Order Now</button>
+      <button class="cta-btn-secondary" onclick="alert('Learn more at tesla.com')">Learn More</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN LOGIN ===== -->
+<div class="page" id="adminLoginPage">
+  <div style="min-height:calc(100vh - 96px);background:linear-gradient(135deg,#0a0a0a,#1a1a2e);display:flex;align-items:center;justify-content:center;padding:20px">
+    <div class="admin-login-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 84" style="height:36px;margin-bottom:16px">
+        <path d="M35 84L0 6.3C7.7 2.3 16.5 0 26 0h9c9.5 0 18.3 2.3 26 6.3L35 84z" fill="#E82127"/>
+        <path d="M0 6.3C7 9.7 18.5 12 35 12S63 9.7 70 6.3C62.8 2.4 54 0 44.5 0h-19C16 0 7.2 2.4 0 6.3z" fill="#ff4a4a"/>
+      </svg>
+      <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">Admin Portal</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px">Inventory & Settings Control</div>
+      <div style="text-align:left;margin-bottom:14px">
+        <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Username</label>
+        <input id="aUser" type="text" placeholder="Username" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none"/>
+      </div>
+      <div style="text-align:left;margin-bottom:6px">
+        <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Password</label>
+        <input id="aPass" type="password" placeholder="Password" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none"/>
+      </div>
+      <div id="aErr" style="color:#ff6b6b;font-size:13px;min-height:20px;margin-bottom:8px"></div>
+      <button onclick="doAdminLogin()" style="width:100%;padding:14px;background:#E82127;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Access Dashboard</button>
+      <div style="margin-top:16px"><a onclick="showPage('inventoryPage')" style="font-size:13px;color:rgba(255,255,255,0.3);cursor:pointer">← Back to Inventory</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<div class="page" id="adminPage">
+  <div class="admin-fixed-header">
+    <div style="font-size:16px;font-weight:700">Tesla Admin — Inventory Settings</div>
+    <button onclick="adminLogout()" style="background:rgba(255,255,255,0.1);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif">Logout</button>
+  </div>
+
+  <!-- Discount Settings -->
+  <div class="admin-section">
+    <div class="admin-section-title">🏷️ Discount Settings</div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <label>Discount Percentage (%)</label>
+        <input type="number" id="aDiscount" value="20" min="0" max="50"/>
+      </div>
+      <div class="admin-field">
+        <label>Discount Active</label>
+        <select id="aDiscountActive">
+          <option value="true">Yes — Active</option>
+          <option value="false">No — Disabled</option>
+        </select>
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveSettings('discount')">Save</button>
+    <span class="saved-msg" id="savedDiscount">✓ Saved!</span>
+  </div>
+
+  <!-- FSD Settings -->
+  <div class="admin-section">
+    <div class="admin-section-title">🤖 Full Self-Driving (FSD)</div>
+    <div class="admin-field">
+      <label>Monthly FSD Subscription Fee ($)</label>
+      <input type="number" id="aFsd" value="99" min="0"/>
+    </div>
+    <button class="save-btn" onclick="saveSettings('fsd')">Save</button>
+    <span class="saved-msg" id="savedFsd">✓ Saved!</span>
+  </div>
+
+  <!-- Lease Settings -->
+  <div class="admin-section">
+    <div class="admin-section-title">📋 Lease Terms</div>
+    <div class="admin-field">
+      <label>Minimum Lease Term (months)</label>
+      <input type="number" id="aLeaseMin" value="12" min="1" max="24"/>
+    </div>
+    <div class="admin-field">
+      <label>Maximum Lease Term (months)</label>
+      <input type="number" id="aLeaseMax" value="24" min="12" max="60"/>
+    </div>
+    <button class="save-btn" onclick="saveSettings('lease')">Save</button>
+    <span class="saved-msg" id="savedLease">✓ Saved!</span>
+  </div>
+
+  <!-- Down Payment Tiers -->
+  <div class="admin-section">
+    <div class="admin-section-title">💳 Finance Down Payment Tiers</div>
+    <div style="font-size:13px;color:var(--t-muted);margin-bottom:16px">Set down payment amount per discounted price range</div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <label>Under $40,000 → Down Payment ($)</label>
+        <input type="number" id="aTier1" value="3000"/>
+      </div>
+      <div class="admin-field">
+        <label>$40,000–$80,000 → Down Payment ($)</label>
+        <input type="number" id="aTier2" value="6000"/>
+      </div>
+      <div class="admin-field">
+        <label>$80,000–$100,000 → Down Payment ($)</label>
+        <input type="number" id="aTier3" value="9000"/>
+      </div>
+      <div class="admin-field">
+        <label>Over $100,000 → Down Payment ($)</label>
+        <input type="number" id="aTier4" value="12000"/>
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveSettings('tiers')">Save</button>
+    <span class="saved-msg" id="savedTiers">✓ Saved!</span>
+  </div>
+</div>
+
+<script>
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyAai8mFCTYpylV5DTSpBu2Grt_9Bfz_DWo",
+  authDomain: "tesla1-5c71d.firebaseapp.com",
+  projectId: "tesla1-5c71d",
+  storageBucket: "tesla1-5c71d.firebasestorage.app",
+  messagingSenderId: "998795417398",
+  appId: "1:998795417398:web:ef046c3d8efaf054078597"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ===== ADMIN CREDENTIALS =====
+const ADMIN_USER = 'Nimi93';
+const ADMIN_PASS = '07048199203';
+
+// ===== APP SETTINGS (overridden by Firestore if saved) =====
+let settings = {
+  discount: 20,
+  discountActive: true,
+  fsdFee: 99,
+  leaseMin: 12,
+  leaseMax: 24,
+  tiers: { t1: 3000, t2: 6000, t3: 9000, t4: 12000 }
+};
+
+// ===== VEHICLE DATA =====
+const vehicles = [
+  {
+    id: 'model3', model: 'Model 3', trim: 'Long Range All-Wheel Drive',
+    condition: 'New', originalPrice: 45990,
+    range: '358 mi', speed: '145 mph', accel: '3.1s',
+    wheels: '19" Photon', interior: 'Black Premium', seats: 5, tow: '2,800 lbs',
+    paint: 'Pearl White Multi-Coat', connectivity: '30-day Premium trial',
+    supercharge: true,
+    img: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80',
+    heroImg: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=1400&q=80',
+  },
+  {
+    id: 'modely', model: 'Model Y', trim: 'Performance All-Wheel Drive',
+    condition: 'New', originalPrice: 54990,
+    range: '330 mi', speed: '155 mph', accel: '3.5s',
+    wheels: '21" Überturbine', interior: 'White Premium', seats: 7, tow: '3,500 lbs',
+    paint: 'Midnight Silver Metallic', connectivity: '30-day Premium trial',
+    supercharge: true,
+    img: 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&q=80',
+    heroImg: 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=1400&q=80',
+  },
+  {
+    id: 'models', model: 'Model S', trim: 'Plaid',
+    condition: 'New', originalPrice: 89990,
+    range: '405 mi', speed: '200 mph', accel: '1.99s',
+    wheels: '21" Arachnid', interior: 'Cream Premium', seats: 5, tow: '2,200 lbs',
+    paint: 'Deep Blue Metallic', connectivity: 'Included',
+    supercharge: true,
+    img: 'https://images.unsplash.com/photo-1551260627-fd1b6d2f8f78?w=800&q=80',
+    heroImg: 'https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?w=1400&q=80',
+  },
+  {
+    id: 'modelx', model: 'Model X', trim: 'Plaid',
+    condition: 'Used', originalPrice: 94990,
+    range: '351 mi', speed: '163 mph', accel: '2.5s',
+    wheels: '22" Turbine', interior: 'Black Premium', seats: 6, tow: '5,000 lbs',
+    paint: 'Solid Black', connectivity: 'Included',
+    supercharge: true,
+    img: 'https://images.unsplash.com/photo-1571987502227-9231b837d92a?w=800&q=80',
+    heroImg: 'https://images.unsplash.com/photo-1571987502227-9231b837d92a?w=1400&q=80',
+  },
+  {
+    id: 'cybertruck', model: 'Cybertruck', trim: 'All-Wheel Drive',
+    condition: 'New', originalPrice: 69990,
+    range: '340 mi', speed: '130 mph', accel: '2.6s',
+    wheels: '20" All-Terrain', interior: 'Black Premium', seats: 5, tow: '11,000 lbs',
+    paint: 'Exoskeleton Silver', connectivity: 'Included',
+    supercharge: true,
+    img: 'https://images.unsplash.com/photo-1698520972775-5c2b9ef96b9e?w=800&q=80',
+    heroImg: 'https://images.unsplash.com/photo-1698520972775-5c2b9ef96b9e?w=1400&q=80',
+  }
+];
+
+let currentVehicle = null;
+let currentConditionFilter = 'all';
+let currentModelFilter = 'all';
+let leaseTerm = 12;
+let financeTerm = 6;
+
+// ===== HELPERS =====
+function discountedPrice(orig) {
+  if (!settings.discountActive) return orig;
+  return Math.round(orig * (1 - settings.discount / 100));
+}
+function fmt(n) { return '$' + Number(n).toLocaleString(); }
+function savings(orig) { return Math.round(orig * settings.discount / 100); }
+
+function getDownPayment(discPrice) {
+  const t = settings.tiers;
+  if (discPrice < 40000) return t.t1;
+  if (discPrice < 80000) return t.t2;
+  if (discPrice < 100000) return t.t3;
+  return t.t4;
+}
+
+// ===== LOAD SETTINGS FROM FIRESTORE =====
+async function loadSettings() {
+  try {
+    const doc = await db.collection('siteSettings').doc('inventory').get();
+    if (doc.exists) Object.assign(settings, doc.data());
+  } catch(e) {}
+  renderInventory();
+}
+
+// ===== RENDER INVENTORY =====
+function renderInventory() {
+  const grid = document.getElementById('invGrid');
+  const filtered = vehicles.filter(v => {
+    const condOk = currentConditionFilter === 'all' || v.condition.toLowerCase() === currentConditionFilter;
+    const modelOk = currentModelFilter === 'all' || v.model === currentModelFilter;
+    return condOk && modelOk;
+  });
+  document.getElementById('invCount').textContent = `${filtered.length} vehicle${filtered.length!==1?'s':''} available`;
+
+  grid.innerHTML = filtered.map(v => {
+    const disc = discountedPrice(v.originalPrice);
+    const save = savings(v.originalPrice);
+    const monthly = Math.round(disc / settings.leaseMax);
+    return `
+    <div class="inv-card" onclick="openProduct('${v.id}')">
+      <div class="inv-card-badge ${v.condition==='Used'?'used':''}">${v.condition}</div>
+      <img class="inv-card-img" src="${v.img}" alt="${v.model}" onerror="this.src='https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80'"/>
+      <div class="inv-card-body">
+        <div class="inv-card-model">${v.model}</div>
+        <div class="inv-card-trim">${v.trim}</div>
+        <div class="inv-price-row">
+          <div class="inv-price-orig">${fmt(v.originalPrice)}</div>
+          <div class="inv-price-disc">${fmt(disc)}</div>
+        </div>
+        <div class="inv-savings">Reduced by ${fmt(save)}</div>
+        <div class="inv-specs">
+          <div class="inv-spec"><span class="inv-spec-val">${v.range}</span><span class="inv-spec-label">Range</span></div>
+          <div class="inv-spec"><span class="inv-spec-val">${v.seats}</span><span class="inv-spec-label">Seats</span></div>
+          <div class="inv-spec"><span class="inv-spec-val">${v.wheels}</span><span class="inv-spec-label">Wheels</span></div>
+          <div class="inv-spec"><span class="inv-spec-val">${v.tow}</span><span class="inv-spec-label">Towing</span></div>
+        </div>
+        <div class="inv-monthly">
+          <span class="inv-monthly-label">Est. monthly (${settings.leaseMax} mo)</span>
+          <span class="inv-monthly-val">${fmt(monthly)}/mo</span>
+        </div>
+        ${v.supercharge ? `<div class="inv-supercharge">⚡ Free Unlimited Supercharging</div>` : ''}
+        <button class="inv-card-btn">View Details</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== OPEN PRODUCT PAGE =====
+function openProduct(id) {
+  currentVehicle = vehicles.find(v => v.id === id);
+  if (!currentVehicle) return;
+  const v = currentVehicle;
+  const disc = discountedPrice(v.originalPrice);
+  const save = savings(v.originalPrice);
+
+  // Hero
+  document.getElementById('productHeroImg').src = v.heroImg;
+  document.getElementById('productHeroImg').onerror = function(){ this.src = v.img; };
+  document.getElementById('productName').textContent = v.model;
+  document.getElementById('pRange').textContent = v.range;
+  document.getElementById('pSpeed').textContent = v.speed;
+  document.getElementById('pAccel').textContent = v.accel + ' sec';
+
+  // Reset tabs
+  switchPayTab('cash', document.querySelector('.pay-tab'));
+  document.getElementById('cashFsd').checked = false;
+  document.getElementById('leaseFsd').checked = false;
+  document.getElementById('financeFsd').checked = false;
+  leaseTerm = settings.leaseMin;
+  financeTerm = 6;
+
+  // Build lease term buttons
+  buildTermButtons('leaseTerms', settings.leaseMin, settings.leaseMax, 1, leaseTerm, t => { leaseTerm = t; updatePayments(); });
+
+  // Build finance term buttons (1–12 months)
+  buildTermButtons('financeTerms', 1, 12, 1, financeTerm, t => { financeTerm = t; updatePayments(); });
+
+  updatePayments();
+
+  // Details grid
+  document.getElementById('detailGrid').innerHTML = [
+    ['Model', v.model], ['Trim', v.trim], ['Condition', v.condition],
+    ['Paint', v.paint], ['Wheels', v.wheels], ['Interior', v.interior],
+    ['Seats', v.seats], ['Towing', v.tow],
+    ['Range', v.range], ['Top Speed', v.speed],
+    ['0–60 mph', v.accel + ' sec'], ['Premium Connectivity', v.connectivity],
+  ].map(([label, val]) => `
+    <div class="detail-item">
+      <div class="detail-item-label">${label}</div>
+      <div class="detail-item-val">${val}</div>
+    </div>`).join('');
+
+  showPage('productPage');
+  window.scrollTo(0,0);
+}
+
+function buildTermButtons(containerId, min, max, step, selected, onSelect) {
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  for (let t = min; t <= max; t += step) {
+    const btn = document.createElement('button');
+    btn.className = 'term-opt' + (t === selected ? ' selected' : '');
+    btn.textContent = t + ' mo';
+    btn.onclick = () => {
+      wrap.querySelectorAll('.term-opt').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      onSelect(t);
+    };
+    wrap.appendChild(btn);
+  }
+}
+
+function updatePayments() {
+  if (!currentVehicle) return;
+  const v = currentVehicle;
+  const disc = discountedPrice(v.originalPrice);
+  const save = savings(v.originalPrice);
+  const fsdFee = settings.fsdFee;
+
+  // CASH
+  document.getElementById('cashOrig').textContent = fmt(v.originalPrice) + ' original price';
+  document.getElementById('cashDisc').textContent = fmt(disc);
+  document.getElementById('cashSavings').textContent = `You save ${fmt(save)} (${settings.discount}% off)`;
+  document.getElementById('cashVehiclePrice').textContent = fmt(disc);
+  document.getElementById('cashSavingsRow').textContent = '−' + fmt(save);
+  const cashFsdOn = document.getElementById('cashFsd').checked;
+  document.getElementById('cashFsdRow').style.display = cashFsdOn ? 'flex' : 'none';
+  document.getElementById('cashFsdVal').textContent = `+${fmt(fsdFee)}/mo`;
+  document.getElementById('cashFsdSub').textContent = `+${fmt(fsdFee)}/mo subscription`;
+
+  // LEASE
+  document.getElementById('leaseOrig').textContent = fmt(v.originalPrice) + ' original price';
+  document.getElementById('leaseDisc').textContent = fmt(disc);
+  const leaseFsdOn = document.getElementById('leaseFsd').checked;
+  const leaseMonthly = Math.round(disc / leaseTerm) + (leaseFsdOn ? fsdFee : 0);
+  document.getElementById('leaseMonthly').textContent = fmt(leaseMonthly) + '/mo';
+  document.getElementById('leaseSub').textContent = `${fmt(disc)} ÷ ${leaseTerm} months${leaseFsdOn ? ` + ${fmt(fsdFee)} FSD` : ''}`;
+  document.getElementById('leaseFsdSub').textContent = `+${fmt(fsdFee)}/mo subscription`;
+
+  // FINANCE
+  document.getElementById('financeOrig').textContent = fmt(v.originalPrice) + ' original price';
+  document.getElementById('financeDisc').textContent = fmt(disc);
+  const down = getDownPayment(disc);
+  const remaining = Math.max(0, disc - down);
+  document.getElementById('financeDown').textContent = fmt(down);
+  document.getElementById('financeBalance').textContent = fmt(remaining);
+  const financeFsdOn = document.getElementById('financeFsd').checked;
+  document.getElementById('financeFsdSub').textContent = `+${fmt(fsdFee)}/mo subscription`;
+
+  // If price < down, pay full upfront
+  if (disc <= down) {
+    document.getElementById('financeTermWrap').style.display = 'none';
+    document.getElementById('financeMonthly').textContent = fmt(disc) + ' upfront';
+    document.getElementById('financeSub').textContent = 'Full price paid upfront (below down payment threshold)';
+  } else {
+    document.getElementById('financeTermWrap').style.display = 'block';
+    const finMonthly = Math.round(remaining / financeTerm) + (financeFsdOn ? fsdFee : 0);
+    document.getElementById('financeMonthly').textContent = fmt(finMonthly) + '/mo';
+    document.getElementById('financeSub').textContent = `${fmt(remaining)} ÷ ${financeTerm} months${financeFsdOn ? ` + ${fmt(fsdFee)} FSD` : ''}`;
+  }
+}
+
+// ===== PAY TAB SWITCH =====
+function switchPayTab(tab, btn) {
+  document.querySelectorAll('.pay-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pay-content').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else document.querySelectorAll('.pay-tab')[['cash','lease','finance'].indexOf(tab)]?.classList.add('active');
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+}
+
+// ===== FILTERS =====
+function filterCondition(val, btn) {
+  currentConditionFilter = val;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderInventory();
+}
+function filterModel(val) {
+  currentModelFilter = val;
+  renderInventory();
+}
+
+// ===== DARK MODE =====
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  document.querySelector('.dark-toggle').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+}
+
+// ===== PAGES =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ===== ADMIN =====
+function doAdminLogin() {
+  const u = document.getElementById('aUser').value.trim();
+  const p = document.getElementById('aPass').value.trim();
+  const err = document.getElementById('aErr');
+  if (!u || !p) { err.textContent = 'Please fill in both fields'; return; }
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    err.textContent = '';
+    // Load current settings into admin fields
+    document.getElementById('aDiscount').value = settings.discount;
+    document.getElementById('aDiscountActive').value = String(settings.discountActive);
+    document.getElementById('aFsd').value = settings.fsdFee;
+    document.getElementById('aLeaseMin').value = settings.leaseMin;
+    document.getElementById('aLeaseMax').value = settings.leaseMax;
+    document.getElementById('aTier1').value = settings.tiers.t1;
+    document.getElementById('aTier2').value = settings.tiers.t2;
+    document.getElementById('aTier3').value = settings.tiers.t3;
+    document.getElementById('aTier4').value = settings.tiers.t4;
+    showPage('adminPage');
+  } else {
+    err.textContent = 'Incorrect username or password';
+    document.getElementById('aUser').value = '';
+    document.getElementById('aPass').value = '';
+  }
+}
+
+function adminLogout() {
+  showPage('inventoryPage');
+}
+
+async function saveSettings(section) {
+  if (section === 'discount') {
+    settings.discount = parseInt(document.getElementById('aDiscount').value) || 20;
+    settings.discountActive = document.getElementById('aDiscountActive').value === 'true';
+  } else if (section === 'fsd') {
+    settings.fsdFee = parseInt(document.getElementById('aFsd').value) || 99;
+  } else if (section === 'lease') {
+    settings.leaseMin = parseInt(document.getElementById('aLeaseMin').value) || 12;
+    settings.leaseMax = parseInt(document.getElementById('aLeaseMax').value) || 24;
+  } else if (section === 'tiers') {
+    settings.tiers = {
+      t1: parseInt(document.getElementById('aTier1').value) || 3000,
+      t2: parseInt(document.getElementById('aTier2').value) || 6000,
+      t3: parseInt(document.getElementById('aTier3').value) || 9000,
+      t4: parseInt(document.getElementById('aTier4').value) || 12000,
+    };
+  }
+  // Save to Firestore
+  try {
+    await db.collection('siteSettings').doc('inventory').set(settings, { merge: true });
+  } catch(e) { console.log('Firestore save error:', e); }
+
+  // Show saved message
+  const msg = document.getElementById('saved' + section.charAt(0).toUpperCase() + section.slice(1));
+  if (msg) { msg.classList.add('show'); setTimeout(() => msg.classList.remove('show'), 2000); }
+  renderInventory();
+}
+
+// ===== INIT =====
+loadSettings();
+</script>
+</body>
+</html>
