@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Tesla — Sign In</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css"/>
@@ -11,38 +11,35 @@
   background-image:url('https://images.unsplash.com/photo-1617788138017-80ad40651399?w=1400&q=60');
   background-size:cover;background-position:center;">
 
-<div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);"></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(5px);"></div>
 
-<!-- ── NAV ─────────────────────────────────────────────────── -->
 <nav id="navbar" class="scrolled">
   <a class="nav-logo" href="index.html">TESL<span>A</span></a>
-  <div class="nav-links">
-    <a href="shop.html">Vehicles</a>
-    <a href="prize.html">Lucky Number</a>
-  </div>
-  <div class="nav-right">
-    <a href="register.html">Register</a>
-  </div>
+  <div class="nav-links"><a href="shop.html">Vehicles</a><a href="prize.html">Lucky Number</a></div>
+  <div class="nav-right"><a href="register.html">Register</a></div>
 </nav>
 
-<div style="position:relative;z-index:2;margin-top:4rem;width:100%;max-width:440px;">
+<div style="position:relative;z-index:2;margin-top:5rem;width:100%;max-width:440px;">
   <div class="form-card">
-    <div class="form-title">Sign In</div>
+    <div class="form-title" id="login-title-el">Sign In</div>
 
     <form id="login-form" novalidate>
       <div class="form-group">
-        <label class="form-label" for="login-email">Email Address</label>
+        <label class="form-label" id="login-email-label" for="login-email">Email Address</label>
         <input class="form-input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
       </div>
       <div class="form-group">
-        <label class="form-label" for="login-password">Password</label>
+        <label class="form-label" id="login-pass-label" for="login-password">Password</label>
         <input class="form-input" id="login-password" type="password" placeholder="••••••••" autocomplete="current-password"/>
       </div>
       <p class="form-error" id="err-login"></p>
-      <button type="submit" class="btn btn-red w-full mt-4" style="padding:.75rem;">Sign In</button>
+      <button type="submit" id="login-btn-el" class="btn btn-red w-full mt-4" style="padding:.8rem;">Sign In</button>
     </form>
 
-    <p class="form-link">Don't have an account? <a href="register.html">Create one</a></p>
+    <p class="form-link">
+      <span id="login-link-el">Don't have an account?</span>
+      <a href="register.html" id="login-reg-el"> Create one</a>
+    </p>
   </div>
 </div>
 
