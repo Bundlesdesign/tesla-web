@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tesla — My Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div class="dash-layout" style="padding-top:var(--nav-h);">
+
+  <!-- ── NAV ─────────────────────────────────────────────────── -->
+  <nav id="navbar" class="scrolled">
+    <a class="nav-logo" href="index.html">TESL<span>A</span></a>
+    <div class="nav-links">
+      <a href="shop.html">Vehicles</a>
+      <a href="prize.html">Lucky Number</a>
+    </div>
+    <div class="nav-right">
+      <a href="dashboard.html" id="nav-dash">Dashboard</a>
+      <button class="btn btn-outline" id="nav-logout" style="padding:.4rem 1rem;font-size:.75rem;">Sign Out</button>
+      <a href="login.html" id="nav-login" style="display:none">Sign In</a>
+    </div>
+  </nav>
+
+  <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
+  <aside class="dash-sidebar">
+    <div style="padding:.5rem .9rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:1rem;">
+      <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-600);">My Account</div>
+      <div style="font-size:.95rem;font-weight:600;margin-top:.25rem;" id="dash-name">—</div>
+      <div style="font-size:.78rem;color:var(--gray-400);" id="dash-email">—</div>
+    </div>
+    <nav class="dash-nav">
+      <a href="#overview" class="active">📊 Overview</a>
+      <a href="shop.html">🚗 Shop Vehicles</a>
+      <a href="prize.html">🏆 Lucky Number</a>
+      <a href="#signout" id="sidebar-logout">🚪 Sign Out</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────────────────────────── -->
+  <main class="dash-main">
+    <div style="margin-bottom:2rem;">
+      <h1 class="section-title" style="font-size:1.8rem;">My Dashboard</h1>
+      <p class="section-sub">Welcome back, <span id="dash-name-2">—</span></p>
+    </div>
+
+    <!-- Profile card -->
+    <div style="background:var(--gray-900);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:1.5rem;margin-bottom:2rem;">
+      <h3 style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);margin-bottom:1rem;">Account Details</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
+        <div>
+          <div class="stat-label">Email</div>
+          <div style="font-size:.9rem;margin-top:.2rem;" id="dash-email-2">—</div>
+        </div>
+        <div>
+          <div class="stat-label">Phone</div>
+          <div style="font-size:.9rem;margin-top:.2rem;" id="dash-phone">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prize status -->
+    <h3 style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);margin-bottom:1rem;">Prize Application</h3>
+
+    <div id="dash-order-wrap" style="background:linear-gradient(135deg,#0a0a0a,#1a1200);border:1px solid var(--gold);border-radius:8px;padding:1.5rem;">
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div style="font-size:2.5rem;">🏆</div>
+        <div>
+          <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">Your Order Code</div>
+          <div id="dash-order-code" style="font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:.15em;color:var(--gold);margin-top:.2rem;"></div>
+        </div>
+        <div style="margin-left:auto;">
+          <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);">Status</div>
+          <div id="dash-order-status" style="font-size:.9rem;font-weight:600;color:var(--white);margin-top:.2rem;text-transform:capitalize;"></div>
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--gray-600);margin-top:1rem;">📸 Screenshot this code and share it with your social media agent to proceed with prize fulfillment.</p>
+    </div>
+
+    <div id="dash-no-order" style="background:var(--gray-900);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:2rem;text-align:center;">
+      <div style="font-size:2rem;margin-bottom:.75rem;">🎰</div>
+      <p style="color:var(--gray-400);font-size:.9rem;">You haven't submitted a prize claim yet.</p>
+      <a href="prize.html" class="btn btn-gold mt-4" style="padding:.75rem 2rem;">Try Your Lucky Number →</a>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { initNav, initDashboard } from './main.js';
+  import { auth } from './firebase-config.js';
+  import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  initNav();
+  initDashboard();
+
+  // Sync secondary name/email fields
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      document.getElementById('dash-name-2').textContent  = user.displayName || user.email;
+      document.getElementById('dash-email-2').textContent = user.email;
+    }
+  });
+
+  document.getElementById('sidebar-logout')?.addEventListener('click', async e => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>
