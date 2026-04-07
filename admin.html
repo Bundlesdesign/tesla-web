@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tesla — Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div class="dash-layout" style="padding-top:var(--nav-h);">
+
+  <!-- ── NAV ─────────────────────────────────────────────────── -->
+  <nav id="navbar" class="scrolled">
+    <a class="nav-logo" href="index.html">TESL<span>A</span></a>
+    <div class="nav-right">
+      <span style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--red);font-weight:700;">Admin Panel</span>
+      <button class="btn btn-outline" id="nav-logout" style="padding:.4rem 1rem;font-size:.75rem;">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
+  <aside class="dash-sidebar">
+    <div style="padding:.5rem .9rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:1rem;">
+      <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--red);">Admin Access</div>
+      <div style="font-size:.85rem;font-weight:600;margin-top:.25rem;">Solokumo05@gmail.com</div>
+    </div>
+    <nav class="dash-nav">
+      <a href="#" class="active">📊 Overview</a>
+      <a href="#claims">🏆 Prize Claims</a>
+      <a href="#settings">⚙️ Settings</a>
+      <a href="index.html">🏠 View Site</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────────────────────────── -->
+  <main class="dash-main">
+    <div style="margin-bottom:2rem;">
+      <h1 class="section-title" style="font-size:1.8rem;">Admin Dashboard</h1>
+      <p class="section-sub">Manage prize claims and site settings.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-cards mb-8">
+      <div class="stat-card">
+        <div class="stat-label">Total Prize Claims</div>
+        <div class="stat-value text-red" id="stat-claims">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Discount</div>
+        <div class="stat-value" id="stat-discount">20%</div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings" style="background:var(--gray-900);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:1.5rem;margin-bottom:2rem;">
+      <h3 style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);margin-bottom:1.2rem;">⚙️ Site Settings</h3>
+
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div>
+          <label class="form-label" for="admin-discount">Global Discount (%)</label>
+          <input class="form-input" id="admin-discount" type="number" min="1" max="80" style="width:120px;"/>
+        </div>
+        <button id="save-discount" class="btn btn-red" style="margin-top:1.2rem;padding:.6rem 1.5rem;">Save</button>
+      </div>
+      <p style="font-size:.72rem;color:var(--gray-600);margin-top:.75rem;">This discount applies across all vehicle listings on the shop page.</p>
+    </div>
+
+    <!-- Prize Claims Table -->
+    <div id="claims" style="background:var(--gray-900);border:1px solid rgba(255,255,255,.07);border-radius:8px;overflow:hidden;">
+      <div style="padding:1.2rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);">🏆 Prize Claims</h3>
+        <button onclick="location.reload()" style="font-size:.72rem;color:var(--gray-400);text-decoration:underline;">Refresh</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Order Code</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="claims-tbody">
+            <tr>
+              <td colspan="6" style="text-align:center;color:var(--gray-400);padding:2rem;">Loading…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { initNav, initAdmin } from './main.js';
+  import { auth, db } from './firebase-config.js';
+  import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  initNav();
+  initAdmin();
+
+  // Show active discount in stat card
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      const snap = await getDoc(doc(db, 'settings', 'global'));
+      const pct = snap.exists() ? (snap.data().discountPct ?? 20) : 20;
+      const el = document.getElementById('stat-discount');
+      if (el) el.textContent = pct + '%';
+    }
+  });
+</script>
+</body>
+</html>

