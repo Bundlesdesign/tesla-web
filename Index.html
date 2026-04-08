@@ -1,0 +1,346 @@
+‎<!DOCTYPE html>
+‎<html lang="en">
+‎<head>
+‎    <meta charset="UTF-8">
+‎    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+‎    <title>Tesla | Electric Cars, Solar & Clean Energy</title>
+‎    <link rel="preconnect" href="https://fonts.googleapis.com">
+‎    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+‎    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+‎    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+‎    
+‎    <style>
+‎        :root {
+‎            --tesla-red: #E82127;
+‎            --tesla-dark: #171a20;
+‎            --tesla-grey: #393c41;
+‎            --gold: #d4af37;
+‎            --bg-color: #ffffff;
+‎            --text-color: #171a20;
+‎            --card-bg: #ffffff;
+‎            --glass: rgba(255, 255, 255, 0.8);
+‎            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+‎        }
+‎
+‎        [data-theme="dark"] {
+‎            --bg-color: #171a20;
+‎            --text-color: #ffffff;
+‎            --card-bg: #222529;
+‎            --glass: rgba(23, 26, 32, 0.8);
+‎        }
+‎
+‎        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
+‎        body { background: var(--bg-color); color: var(--text-color); overflow-x: hidden; transition: background 0.3s; }
+‎        h1, h2, .serif { font-family: 'DM Serif Display', serif; }
+‎
+‎        /* Banners */
+‎        .banner-apr { background: var(--gold); color: #000; text-align: center; padding: 8px; font-weight: 500; position: relative; font-size: 14px; }
+‎        .banner-discount { background: var(--tesla-red); color: #fff; text-align: center; padding: 6px; font-weight: 700; font-size: 13px; text-transform: uppercase; }
+‎        .close-banner { position: absolute; right: 20px; cursor: pointer; font-weight: bold; }
+‎
+‎        /* Header */
+‎        header { position: sticky; top: 0; z-index: 100; background: var(--glass); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 15px 40px; }
+‎        .logo svg { height: 18px; fill: var(--text-color); }
+‎        nav a { margin: 0 15px; text-decoration: none; color: var(--text-color); font-weight: 500; font-size: 14px; cursor: pointer; }
+‎        .nav-right { display: flex; align-items: center; gap: 15px; }
+‎        .zip-input { border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; width: 80px; font-size: 12px; }
+‎
+‎        /* Loader */
+‎        #tesla-loader { position: fixed; inset: 0; background: white; z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+‎        .loader-arc { width: 80px; height: 80px; border: 3px solid #eee; border-top: 3px solid #888; border-radius: 50%; animation: spin 1s linear infinite; position: absolute; }
+‎        .loader-t { width: 40px; fill: var(--tesla-dark); z-index: 1001; }
+‎        @keyframes spin { 100% { transform: rotate(360deg); } }
+‎
+‎        /* Pages */
+‎        .page { display: none; padding: 40px 5%; animation: fadeIn 0.5s ease; }
+‎        .page.active { display: block; }
+‎        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+‎
+‎        /* Inventory Cards */
+‎        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
+‎        .car-card { background: var(--card-bg); border-radius: 12px; overflow: hidden; transition: var(--transition); border: 1px solid rgba(0,0,0,0.05); cursor: pointer; position: relative; }
+‎        .car-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+‎        .car-img { width: 100%; height: 200px; object-fit: cover; }
+‎        .card-content { padding: 20px; }
+‎        .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
+‎        .badge-new { background: #eef; color: blue; }
+‎        .badge-savings { background: #ffff00; color: #000; display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-top: 10px; }
+‎        .price-old { text-decoration: line-through; color: #888; font-size: 0.9em; }
+‎        .price-new { font-size: 1.4em; font-weight: bold; color: var(--tesla-red); }
+‎        .specs-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; font-size: 13px; color: var(--tesla-grey); }
+‎
+‎        /* Lucky Code Page */
+‎        #page-lucky { background: radial-gradient(circle, #4a0000 0%, #171a20 100%); color: white; min-height: 100vh; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+‎        .gold-text { color: var(--gold); background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fcf6ba, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; }
+‎        .lucky-input { background: transparent; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 15px; color: white; font-size: 24px; text-align: center; letter-spacing: 4px; width: 350px; margin: 20px 0; transition: border 0.3s; }
+‎        .lucky-input:focus { border-color: var(--gold); outline: none; }
+‎        .btn-gold { background: linear-gradient(45deg, #bf953f, #aa771c); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+‎        
+‎        /* Modal Glass */
+‎        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+‎        .modal-content { background: var(--bg-color); width: 90%; max-width: 500px; padding: 30px; border-radius: 15px; position: relative; }
+‎
+‎        /* Admin Dashboard */
+‎        .admin-sidebar { width: 250px; background: #000; color: #fff; height: 100vh; padding: 20px; position: fixed; left: 0; top: 0; }
+‎        .admin-main { margin-left: 250px; padding: 40px; }
+‎        .settings-card { background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+‎    </style>
+‎</head>
+‎<body>
+‎
+‎    <div id="tesla-loader">
+‎        <div class="loader-arc"></div>
+‎        <svg class="loader-t" viewBox="0 0 342 35"><path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h12.5V7.2l.5-.1h11a9.7 9.7 0 0 0 7-7zM234 5c0-1.3-.3-1.9-1-3.2l-1-1.3h-13l-1.3 1.3-1 1.3a10 10 0 0 0-1 3.2V11c0 1.3.3 1.9 1 3.2l1 1.3h13l1.3-1.3 1-1.3a10 10 0 0 0 1-3.2V5zm-12.5 7h-11V3h11v9zm-136.5-5.1h-11l.5.1V22h12.5V7.2l.5-.1h11a9.7 9.7 0 0 0 7-7h-11l-.5-.1V.1h-12.5v7l-.5-.1h-11a9.7 9.7 0 0 0-7 7l11 .5h11l-.5-.1v7h-12.5v7h12.5v7h12.5V14.2l.5-.1h11a9.7 9.7 0 0 0 7-7h-11l-.5-.1z"></path></svg>
+‎    </div>
+‎
+‎    <div id="banners">
+‎        <div class="banner-apr" id="apr-banner">0% APR Available · Learn More <span class="close-banner" onclick="this.parentElement.remove()">×</span></div>
+‎        <div class="banner-discount">🔥 20% off all inventory — limited time!</div>
+‎    </div>
+‎
+‎    <header id="main-header">
+‎        <div class="logo" onclick="showPage('inventory')">
+‎            <svg viewBox="0 0 342 35" xmlns="http://www.w3.org/2000/svg"><path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h12.5V7.2l.5-.1h11a9.7 9.7 0 0 0 7-7zM64 0c-2 0-3 1-4 2l-1 2-1 2v34h13V10h11v25h12V10h11v25h13V4l-1-2-1-2zm108 0h-13l-1 1-1 1V35h13V19h11v16h12V19h11v16h13V2l-1-1-1-1zm72 20V0h-13v35h40v-10h-27zm93-20h-13l-1 1-1 1v33l1 1 1 1h40v-10h-27v-5h27v-10h-27v-5h27V0z"></path></svg>
+‎        </div>
+‎        <nav>
+‎            <a onclick="showPage('inventory')">Inventory</a>
+‎            <a onclick="showPage('lucky')">🎟️ Lucky Code</a>
+‎            <a onclick="showPage('admin-login')">Admin</a>
+‎        </nav>
+‎        <div class="nav-right">
+‎            <input type="text" class="zip-input" placeholder="ZIP Code" value="90210">
+‎            <span id="auth-buttons">
+‎                <a onclick="openAuth('signin')">Sign In</a>
+‎            </span>
+‎            <button onclick="toggleDarkMode()" style="background:none; border:none; cursor:pointer; font-size:18px;">🌓</button>
+‎        </div>
+‎    </header>
+‎
+‎    <main id="page-inventory" class="page active">
+‎        <h1 style="text-align: center; margin-bottom: 10px;">Available Inventory</h1>
+‎        <p style="text-align: center; color: #666;" id="vehicle-count">5 vehicles available</p>
+‎        
+‎        <div class="inventory-grid" id="inventory-container">
+‎            </div>
+‎    </main>
+‎
+‎    <main id="page-details" class="page">
+‎        <div id="details-content"></div>
+‎    </main>
+‎
+‎    <main id="page-lucky" class="page">
+‎        <div id="particles-js"></div>
+‎        <div class="serif gold-text" style="font-size: 3rem; margin-bottom: 10px;">👑 Tesla Lucky Draw</div>
+‎        <p>Enter your exclusive representative reference code</p>
+‎        <input type="text" id="lucky-input" class="lucky-input" placeholder="SPE-XXXXXXXXXX">
+‎        <button class="btn-gold" id="btn-check-code" onclick="checkLuckyCode()">✦ Check My Code</button>
+‎        
+‎        <div id="lucky-processing" style="display:none; margin-top: 30px;">
+‎            <div class="loader-arc" style="position:relative; margin: 0 auto 20px;"></div>
+‎            <p>Processing reference code... Please wait</p>
+‎            <div style="width: 300px; height: 4px; background: #333; margin-top: 15px; border-radius: 2px;">
+‎                <div id="lucky-progress" style="width: 0%; height: 100%; background: var(--gold); transition: width 8s linear;"></div>
+‎            </div>
+‎        </div>
+‎
+‎        <div id="lucky-win" style="display:none; margin-top: 20px; animation: fadeIn 1s;">
+‎            <div style="font-size: 3rem;">🎉🏆🎉</div>
+‎            <div class="gold-text" style="font-size: 1.5rem; margin: 20px 0;">🎉 YOU WON $150,000 USD AND A TESLA MODEL S (BLACK)! 🎉</div>
+‎            <button class="btn-gold" style="background: linear-gradient(45deg, #ff416c, #ff4b2b);" onclick="generateOrderCode()">🎫 Generate Order Code</button>
+‎            <div id="order-code-display" style="display:none; margin-top: 20px; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+‎                <p style="font-size: 12px; color: #aaa;">YOUR ORDER CODE</p>
+‎                <h2 id="final-code" class="gold-text" style="letter-spacing: 4px; margin: 10px 0;">TSL-76547963YG</h2>
+‎                <button onclick="copyCode()" id="copy-btn" style="background:none; border: 1px solid var(--gold); color: var(--gold); padding: 5px 15px; cursor: pointer;">📋 Copy to Clipboard</button>
+‎            </div>
+‎        </div>
+‎    </main>
+‎
+‎    <main id="page-admin-login" class="page">
+‎        <div style="max-width: 400px; margin: 100px auto; padding: 40px; background: var(--card-bg); border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+‎            <svg viewBox="0 0 342 35" style="width:100px; fill: var(--tesla-red); margin-bottom: 30px;"><path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h12.5V7.2l.5-.1h11a9.7 9.7 0 0 0 7-7z"></path></svg>
+‎            <h2 style="margin-bottom: 20px;">Admin Access</h2>
+‎            <input type="email" id="admin-email" placeholder="Email" style="width:100%; padding: 12px; margin-bottom: 10px;">
+‎            <input type="password" id="admin-pass" placeholder="Password" style="width:100%; padding: 12px; margin-bottom: 20px;">
+‎            <button onclick="loginAdmin()" style="width:100%; padding: 12px; background: #000; color: #fff; border:none; border-radius: 5px; cursor:pointer;">Login</button>
+‎        </div>
+‎    </main>
+‎
+‎    <div class="modal" id="modal-auth">
+‎        <div class="modal-content">
+‎            <div style="text-align:center; margin-bottom: 20px;">
+‎                 <svg viewBox="0 0 342 35" style="width:80px;"><path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h12.5V7.2l.5-.1h11a9.7 9.7 0 0 0 7-7z"></path></svg>
+‎            </div>
+‎            <div id="auth-forms">
+‎                <input type="email" id="u-email" placeholder="Email" style="width:100%; padding: 12px; margin-bottom: 10px;">
+‎                <input type="password" id="u-pass" placeholder="Password" style="width:100%; padding: 12px; margin-bottom: 20px;">
+‎                <button onclick="handleAuth()" style="width:100%; padding: 12px; background: var(--tesla-red); color: #fff; border:none; border-radius: 5px; cursor:pointer;">Continue</button>
+‎            </div>
+‎            <p onclick="document.getElementById('modal-auth').style.display='none'" style="text-align:center; margin-top:15px; font-size:12px; cursor:pointer;">Close</p>
+‎        </div>
+‎    </div>
+‎
+‎    <script type="module">
+‎        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+‎        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+‎        import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+‎
+‎        const firebaseConfig = {
+‎            apiKey: "AIzaSyAai8mFCTYpylV5DTSpBu2Grt_9Bfz_DWo",
+‎            authDomain: "tesla1-5c71d.firebaseapp.com",
+‎            projectId: "tesla1-5c71d",
+‎            storageBucket: "tesla1-5c71d.firebasestorage.app",
+‎            messagingSenderId: "998795417398",
+‎            appId: "1:998795417398:web:ef046c3d8efaf054078597"
+‎        };
+‎
+‎        const app = initializeApp(firebaseConfig);
+‎        const auth = getAuth(app);
+‎        const db = getFirestore(app);
+‎
+‎        // Vehicle Data
+‎        const vehicles = [
+‎            { id: 'm3', name: 'Model 3', price: 45990, range: '358 mi', speed: '145 mph', zero60: '3.1s', seats: 5, condition: 'New', img: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&q=80&w=800' },
+‎            { id: 'my', name: 'Model Y', price: 54990, range: '330 mi', speed: '155 mph', zero60: '3.5s', seats: 7, condition: 'New', img: 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&q=80&w=800' },
+‎            { id: 'ms', name: 'Model S', price: 89990, range: '405 mi', speed: '200 mph', zero60: '1.99s', seats: 5, condition: 'New', img: 'https://images.unsplash.com/photo-1536700503339-1e4b06520771?auto=format&fit=crop&q=80&w=800' },
+‎            { id: 'mx', name: 'Model X', price: 94990, range: '351 mi', speed: '163 mph', zero60: '2.5s', seats: 6, condition: 'Used', img: 'https://images.unsplash.com/photo-1561580119-6199e33904fd?auto=format&fit=crop&q=80&w=800' },
+‎            { id: 'ct', name: 'Cybertruck', price: 69990, range: '340 mi', speed: '130 mph', zero60: '2.6s', seats: 5, condition: 'New', img: 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&q=80&w=800' }
+‎        ];
+‎
+‎        // Global functions
+‎        window.showPage = (pageId) => {
+‎            const loader = document.getElementById('tesla-loader');
+‎            loader.style.display = 'flex';
+‎            
+‎            setTimeout(() => {
+‎                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+‎                document.getElementById(`page-${pageId}`).classList.add('active');
+‎                loader.style.display = 'none';
+‎                window.scrollTo(0,0);
+‎            }, 1400);
+‎        };
+‎
+‎        window.renderInventory = () => {
+‎            const container = document.getElementById('inventory-container');
+‎            container.innerHTML = vehicles.map(v => {
+‎                const discountPrice = v.price * 0.8;
+‎                const savings = v.price - discountPrice;
+‎                return `
+‎                    <div class="car-card" onclick="viewDetails('${v.id}')">
+‎                        <img src="${v.img}" class="car-img">
+‎                        <div class="card-content">
+‎                            <span class="badge ${v.condition === 'New' ? 'badge-new' : ''}">${v.condition}</span>
+‎                            <h3>${v.name}</h3>
+‎                            <p class="price-old">$${v.price.toLocaleString()}</p>
+‎                            <p class="price-new">$${discountPrice.toLocaleString()}</p>
+‎                            <div class="badge-savings">Reduced by $${savings.toLocaleString()}</div>
+‎                            <div class="specs-mini">
+‎                                <span>Range: ${v.range}</span>
+‎                                <span>Seats: ${v.seats}</span>
+‎                                <span>0-60: ${v.zero60}</span>
+‎                                <span>Top Speed: ${v.speed}</span>
+‎                            </div>
+‎                            <p style="font-size:12px; color:green;">⚡ Free Unlimited Supercharging</p>
+‎                        </div>
+‎                    </div>
+‎                `;
+‎            }).join('');
+‎        };
+‎
+‎        window.viewDetails = (id) => {
+‎            const v = vehicles.find(x => x.id === id);
+‎            const discPrice = v.price * 0.8;
+‎            document.getElementById('details-content').innerHTML = `
+‎                <div style="height: 60vh; background: url('${v.img}') center/cover; position: relative; border-radius: 20px; display: flex; align-items: flex-end; padding: 40px; color: white;">
+‎                    <div style="background: rgba(0,0,0,0.4); padding: 30px; border-radius: 10px; backdrop-filter: blur(5px);">
+‎                        <h1 class="serif" style="font-size: 3rem;">${v.name}</h1>
+‎                        <div style="display:flex; gap: 40px; margin-top: 20px;">
+‎                            <div><b>${v.range}</b><br><small>Range (EPA)</small></div>
+‎                            <div><b>${v.speed}</b><br><small>Top Speed</small></div>
+‎                            <div><b>${v.zero60}</b><br><small>0-60 mph</small></div>
+‎                        </div>
+‎                    </div>
+‎                </div>
+‎                <div style="display: grid; grid-template-columns: 1fr 400px; gap: 40px; margin-top: 40px;">
+‎                    <div>
+‎                        <h2>Vehicle Specs</h2>
+‎                        <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
+‎                            <tr style="border-bottom: 1px solid #eee;"><td style="padding:15px">Condition</td><td>${v.condition}</td></tr>
+‎                            <tr style="border-bottom: 1px solid #eee;"><td style="padding:15px">Seats</td><td>${v.seats}</td></tr>
+‎                            <tr style="border-bottom: 1px solid #eee;"><td style="padding:15px">Connectivity</td><td>Premium Included</td></tr>
+‎                        </table>
+‎                    </div>
+‎                    <div style="background: var(--card-bg); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+‎                        <p class="price-old">$${v.price.toLocaleString()}</p>
+‎                        <h2 class="price-new" style="font-size: 2.5rem;">$${discPrice.toLocaleString()}</h2>
+‎                        <p style="color: green; font-weight: bold; margin-bottom: 20px;">You save $${(v.price * 0.2).toLocaleString()} (20% off)</p>
+‎                        <button onclick="openAuth()" style="width:100%; padding: 15px; background: #000; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Order Now</button>
+‎                    </div>
+‎                </div>
+‎            `;
+‎            showPage('details');
+‎        };
+‎
+‎        window.checkLuckyCode = () => {
+‎            const code = document.getElementById('lucky-input').value.trim();
+‎            const btn = document.getElementById('btn-check-code');
+‎            const proc = document.getElementById('lucky-processing');
+‎            const prog = document.getElementById('lucky-progress');
+‎
+‎            if (!code) return alert("Please enter a code");
+‎
+‎            btn.disabled = true;
+‎            proc.style.display = 'block';
+‎            setTimeout(() => prog.style.width = '100%', 100);
+‎
+‎            setTimeout(() => {
+‎                proc.style.display = 'none';
+‎                if (code.toUpperCase() === 'SPE-87698432FZ') {
+‎                    document.getElementById('lucky-win').style.display = 'block';
+‎                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+‎                } else {
+‎                    alert("❌ Invalid reference code. Please try again.");
+‎                    btn.disabled = false;
+‎                    prog.style.width = '0%';
+‎                }
+‎            }, 8000);
+‎        };
+‎
+‎        window.generateOrderCode = () => {
+‎            document.getElementById('order-code-display').style.display = 'block';
+‎        };
+‎
+‎        window.copyCode = () => {
+‎            navigator.clipboard.writeText("TSL-76547963YG");
+‎            const btn = document.getElementById('copy-btn');
+‎            btn.innerText = "✓ Copied!";
+‎            setTimeout(() => btn.innerText = "📋 Copy to Clipboard", 2500);
+‎        };
+‎
+‎        window.openAuth = () => {
+‎            document.getElementById('modal-auth').style.display = 'flex';
+‎        };
+‎
+‎        window.loginAdmin = () => {
+‎            const email = document.getElementById('admin-email').value;
+‎            const pass = document.getElementById('admin-pass').value;
+‎            if (email === 'solokumo05@gmail.com' && pass === '07048199203') {
+‎                alert("Welcome Admin");
+‎                // In a full app, show admin dashboard here
+‎            } else {
+‎                alert("Unauthorized");
+‎            }
+‎        };
+‎
+‎        window.toggleDarkMode = () => {
+‎            const body = document.body;
+‎            const theme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+‎            body.setAttribute('data-theme', theme);
+‎        };
+‎
+‎        // Initialize
+‎        renderInventory();
+‎    </script>
+‎</body>
+‎</html>
+‎
+                                     
