@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Admin</title>
+    <style>body{background:#111;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;}.box{background:#222;padding:40px;border-radius:10px;width:320px;}input{width:100%;padding:10px;margin:10px 0;}button{width:100%;padding:10px;background:red;border:none;color:#fff;cursor:pointer;}</style>
+</head>
+<body>
+    <div class="box" id="l">
+        <h2>Admin</h2>
+        <input type="email" id="e" placeholder="Email">
+        <input type="password" id="p" placeholder="Password">
+        <button onclick="go()">LOGIN</button>
+    </div>
+    <div id="d" style="display:none"><h1>Admin Active</h1><p>Discount: 20%</p></div>
+    <script>
+        function go() {
+            if(document.getElementById('e').value==='solokumo05@gmail.com' && document.getElementById('p').value==='07048199203') {
+                document.getElementById('l').style.display='none';
+                document.getElementById('d').style.display='block';
+            } else alert("Error");
+        }
+    </script>
+</body>
+</html>
