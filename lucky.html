@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lucky Draw</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body { background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
+        .gold { color: #d4af37; font-size: 32px; font-weight: bold; }
+        input { background: #111; border: 1px solid #333; padding: 15px; color: #fff; border-radius: 5px; margin: 20px; text-align: center; font-size: 20px; }
+        .btn { background: #d4af37; border: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .bar { width: 200px; height: 4px; background: #222; margin-top: 20px; display: none; }
+        .fill { width: 0%; height: 100%; background: #d4af37; transition: 8s linear; }
+    </style>
+</head>
+<body>
+    <div class="gold">Tesla Lucky Draw</div>
+    <input type="text" id="code" placeholder="SPE-XXXXXXXX">
+    <button class="btn" onclick="check()">CHECK CODE</button>
+    <div class="bar" id="b"><div class="fill" id="f"></div></div>
+    <script>
+        function check() {
+            if(document.getElementById('code').value.toUpperCase() !== 'SPE-87698432FZ') return alert("Invalid Code");
+            document.getElementById('b').style.display='block';
+            setTimeout(() => document.getElementById('f').style.width='100%', 100);
+            setTimeout(() => { confetti(); alert("Winner! Code: TSL-76547963YG"); }, 8000);
+        }
+    </script>
+</body>
+</html>
