@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesla | New Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        :root { --red: #E82127; --dark: #171a20; --gold: #d4af37; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'DM Sans', sans-serif; }
+        body { background: #fff; color: var(--dark); overflow-x: hidden; }
+        
+        .banner-apr { background: #fdf1ba; text-align: center; padding: 12px; font-size: 14px; font-weight: 500; }
+        .banner-red { background: var(--red); color: #fff; text-align: center; padding: 8px; font-size: 12px; font-weight: 700; }
+
+        header { position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); padding: 15px 40px; display: flex; align-items: center; justify-content: space-between; z-index: 1000; border-bottom: 1px solid #eee; }
+        .logo svg { height: 16px; fill: var(--dark); cursor: pointer; }
+        nav a { text-decoration: none; color: var(--dark); font-weight: 500; margin: 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .hero { text-align: center; padding: 60px 20px; }
+        .hero h1 { font-family: 'DM Serif Display', serif; font-size: 44px; margin-bottom: 10px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; padding: 0 40px 80px; }
+        .card { cursor: pointer; transition: 0.3s ease; }
+        .card:hover { transform: translateY(-5px); }
+        .card img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; }
+        .price-new { color: var(--red); font-weight: 700; font-size: 1.1rem; }
+        .badge { background: #ffff00; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 5px; display: inline-block; }
+        
+        /* Auth Modal */
+        #auth-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .auth-box { background: #fff; width: 90%; max-width: 400px; padding: 40px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.3); }
+        .auth-input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ddd; background: #fdfdfd; border-radius: 5px; font-size: 14px; }
+        .btn-blue { background: #3e6ae1; color: #fff; border: none; width: 100%; padding: 14px; border-radius: 5px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="banner-apr">0% APR Available · Learn More</div>
+    <div class="banner-red">🔥 20% OFF ALL INVENTORY — LIMITED TIME!</div>
+
+    <header>
+        <div class="logo"><svg viewBox="0 0 342 35"><path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h12.5V7.2l.5-.1h11a9.7 9.7 0 0 0 7-7zM64 0c-2 0-3 1-4 2l-1 2-1 2v34h13V10h11v25h12V10h11v25h13V4l-1-2-1-2zm108 0h-13l-1 1-1 1V35h13V19h11v16h12V19h11v16h13V2l-1-1-1-1zm72 20V0h-13v35h40v-10h-27zm93-20h-13l-1 1-1 1v33l1 1 1 1h40v-10h-27v-5h27v-10h-27v-5h27V0z"></path></svg></div>
+        <nav>
+            <a href="index.html">Inventory</a>
+            <a href="lucky.html">🎟️ Lucky Code</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+        <button onclick="openAuth(false)" id="user-btn" style="background:none; border:1px solid #000; padding:6px 18px; border-radius:4px; font-weight:500; cursor:pointer;">Sign In</button>
+    </header>
+
+    <div class="hero"><h1>New Inventory</h1><p style="color:#666">5 Vehicles Available</p></div>
+    <div class="grid" id="car-list"></div>
+
+    <div id="auth-modal">
+        <div class="auth-box">
+            <h2 id="atitle" style="margin-bottom:20px;">Sign In</h2>
+            <input type="email" id="aemail" class="auth-input" placeholder="Email Address">
+            <input type="password" id="apass" class="auth-input" placeholder="Password">
+            <button class="btn-blue" onclick="handleAuth()" id="abtn">Continue</button>
+            <p style="margin-top:20px; font-size:13px; color:#666" id="aswitch">New to Tesla? <a href="javascript:void(0)" onclick="openAuth(true)" style="color:#3e6ae1; text-decoration:none; font-weight:700;">Create Account</a></p>
+            <button onclick="document.getElementById('auth-modal').style.display='none'" style="margin-top:15px; border:none; background:none; color:#aaa; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const config = { apiKey: "AIzaSyAai8mFCTYpylV5DTSpBu2Grt_9Bfz_DWo", authDomain: "tesla1-5c71d.firebaseapp.com", projectId: "tesla1-5c71d", storageBucket: "tesla1-5c71d.firebasestorage.app", messagingSenderId: "998795417398", appId: "1:998795417398:web:ef046c3d8efaf054078597" };
+        const app = initializeApp(config);
+        const auth = getAuth(app);
+        let isReg = false;
+
+        window.openAuth = (reg) => {
+            isReg = reg;
+            document.getElementById('auth-modal').style.display = 'flex';
+            document.getElementById('atitle').innerText = reg ? 'Create Account' : 'Sign In';
+            document.getElementById('aswitch').innerHTML = reg ? 'Already have an account? <a href="javascript:void(0)" onclick="openAuth(false)" style="color:#3e6ae1; text-decoration:none; font-weight:700;">Sign In</a>' : 'New to Tesla? <a href="javascript:void(0)" onclick="openAuth(true)" style="color:#3e6ae1; text-decoration:none; font-weight:700;">Create Account</a>';
+        };
+
+        window.handleAuth = async () => {
+            const e = document.getElementById('aemail').value;
+            const p = document.getElementById('apass').value;
+            const btn = document.getElementById('abtn');
+            btn.innerText = "Processing...";
+            try {
+                if(isReg) await createUserWithEmailAndPassword(auth, e, p);
+                else await signInWithEmailAndPassword(auth, e, p);
+                document.getElementById('auth-modal').style.display = 'none';
+            } catch(err) { alert(err.message); btn.innerText = "Continue"; }
+        };
+
+        const cars = [
+            {id:'m3', name:'Model 3', price:45990, img:'https://images.unsplash.com/photo-1560958089-b8a1929cea89'},
+            {id:'my', name:'Model Y', price:54990, img:'https://images.unsplash.com/photo-1619767886558-efdc259cde1a'},
+            {id:'ms', name:'Model S', price:89990, img:'https://images.unsplash.com/photo-1536700503339-1e4b06520771'},
+            {id:'mx', name:'Model X', price:94990, img:'https://images.unsplash.com/photo-1561580119-6199e33904fd'},
+            {id:'ct', name:'Cybertruck', price:69990, img:'https://images.unsplash.com/photo-1594223274512-ad4803739b7c'}
+        ];
+
+        document.getElementById('car-list').innerHTML = cars.map(c => `
+            <div class="card" onclick="location.href='details.html?id=${c.id}'">
+                <img src="${c.img}?auto=format&fit=crop&w=600">
+                <div style="padding:15px 0;">
+                    <h3 style="font-size:18px;">${c.name}</h3>
+                    <p style="text-decoration:line-through; color:#999; font-size:14px;">$${c.price.toLocaleString()}</p>
+                    <p class="price-new">$${(c.price * 0.8).toLocaleString()}</p>
+                    <div class="badge">Reduced by $${(c.price * 0.2).toLocaleString()}</div>
+                </div>
+            </div>
+        `).join('');
+
+        onAuthStateChanged(auth, u => { if(u) document.getElementById('user-btn').innerText = 'MY TESLA'; });
+    </script>
+</body>
+</html>
